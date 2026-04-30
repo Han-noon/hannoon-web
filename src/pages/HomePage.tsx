@@ -1,68 +1,114 @@
 import React, { useState, useEffect } from 'react';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
+import { THEME_CONFIG } from '@/components/Topic';
+
+const AlertModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+}> = ({ isOpen, onClose, title, message }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-[340px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="pt-9 pb-7 px-7 text-center">
+          <h2 className="text-[15px] font-bold text-black mb-2.5 tracking-tight">{title}</h2>
+          <p className="text-[12px] text-gray-400 leading-relaxed font-light break-keep px-1">
+            {message}
+          </p>
+        </div>
+        <div className="flex border-t border-gray-50 h-[44px]">
+          <button
+            onClick={onClose}
+            className="flex-1 text-[13px] text-black font-bold hover:bg-gray-50 transition-colors"
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const HomePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<number[]>([]);
+  const [bookmarkedIds, setBookmarkedIds] = useState<number[]>(() => {
+    const saved = localStorage.getItem('scrappedNewsIds');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const totalPages = 68;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  const handleBookmarkToggle = (id: number) => {
-    setBookmarkedIds((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
-    );
+  const getThemeIdByNewsId = (newsId: number) => {
+    if (newsId === 100) return 1;
+    if (newsId === 101) return 2;
+    if (newsId >= 200) return ((newsId - 200) % 3) + 1;
+    return 1;
   };
 
-  const longSummary =
-    '보건복지부는 지방 의료 인력 확충 및 의료 수급 불균형 해소를 위해 대학별 정원 배정 위원회를 가동하여 인원을 확정한다고 발표했습니다. 이번 개혁안은 단순한 인원 증원을 넘어, 필수 의료 분야의 안정적인 인력 공급과 지역 간 의료 격차를 실질적으로 줄이기 위한 다각적인 정책적 지원을 포함하고 있으며, 향후 10년간의 의료 시스템 체질 개선을 목표로 하고 있습니다.';
+  const handleBookmarkToggle = (newsId: number) => {
+    const themeId = getThemeIdByNewsId(newsId);
+    const isCurrentlyScrapped = bookmarkedIds.includes(newsId);
 
-  const longData = [
-    {
-      id: 100,
-      category: '의료 개혁',
-      title: `${currentPage}P 긴 카드 1`,
-      summary: longSummary,
-      date: '2026.10.10',
-    },
-    {
-      id: 101,
-      category: '의료 개혁',
-      title: `${currentPage}P 긴 카드 2`,
-      summary: longSummary,
-      date: '2026.10.10',
-    },
-  ];
+    if (!isCurrentlyScrapped) {
+      const hasSameThemeScrapped = bookmarkedIds.some((id) => getThemeIdByNewsId(id) === themeId);
+      if (hasSameThemeScrapped) {
+        setIsDuplicateModalOpen(true);
+      }
+      const updated = [...bookmarkedIds, newsId];
+      setBookmarkedIds(updated);
+      localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+    } else {
+      const updated = bookmarkedIds.filter((id) => id !== newsId);
+      setBookmarkedIds(updated);
+      localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+    }
+  };
 
   const briefingData = Array(9)
     .fill(null)
-    .map((_, i) => ({
-      id: currentPage * 10 + i,
-      category: '의료 개혁',
-      title: `${currentPage}P 뉴스 ${i + 1}`,
-      summary: longSummary,
-      date: '2026.10.10',
-    }));
+    .map((_, i) => {
+      const newsId = currentPage * 10 + i + 200;
+      const themeId = getThemeIdByNewsId(newsId);
+      return { id: newsId, themeId, date: '2026.10.10' };
+    });
 
   return (
     <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
         <section className="grid grid-cols-2 gap-x-4 mb-14">
-          {longData.map((news) => (
-            <NewsCard
-              key={news.id}
-              {...news}
-              variant="long"
-              isBookmarked={bookmarkedIds.includes(news.id)}
-              onBookmarkToggle={handleBookmarkToggle}
-            />
-          ))}
+          <NewsCard
+            id={100}
+            themeId={1}
+            category={THEME_CONFIG[1].topic}
+            title={THEME_CONFIG[1].title}
+            summary={THEME_CONFIG[1].summary}
+            date="2026.10.10"
+            variant="long"
+            isBookmarked={bookmarkedIds.includes(100)}
+            onBookmarkToggle={handleBookmarkToggle}
+          />
+          <NewsCard
+            id={101}
+            themeId={2}
+            category={THEME_CONFIG[2].topic}
+            title={THEME_CONFIG[2].title}
+            summary={THEME_CONFIG[2].summary}
+            date="2026.10.10"
+            variant="long"
+            isBookmarked={bookmarkedIds.includes(101)}
+            onBookmarkToggle={handleBookmarkToggle}
+          />
         </section>
 
-        {/* 이슈 브리핑 헤더 */}
+        {/* ⭐️ [Restoration] 이슈 브리핑 섹션 문구 및 디자인 복구 */}
         <section className="mb-8 flex items-start gap-4">
           <h2 className="text-[24px] font-bold text-black tracking-tight leading-none shrink-0">
             이슈 브리핑
@@ -75,12 +121,16 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* 뉴스 카드 그리드 */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
           {briefingData.map((news) => (
             <NewsCard
               key={news.id}
-              {...news}
+              id={news.id}
+              themeId={news.themeId}
+              category={THEME_CONFIG[news.themeId].topic}
+              title={THEME_CONFIG[news.themeId].title}
+              summary={THEME_CONFIG[news.themeId].summary}
+              date={news.date}
               isBookmarked={bookmarkedIds.includes(news.id)}
               onBookmarkToggle={handleBookmarkToggle}
             />
@@ -93,6 +143,12 @@ const HomePage: React.FC = () => {
           onPageChange={setCurrentPage}
         />
       </div>
+      <AlertModal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => setIsDuplicateModalOpen(false)}
+        title="이미 스크랩된 주제"
+        message={`해당 기사의 주제는 이미 스크랩한 토픽에 등록되어 있습니다.\n마이페이지에서 확인해 주세요.`}
+      />
     </div>
   );
 };
