@@ -22,18 +22,18 @@ const NewsCard: React.FC<NewsCardProps> = ({
   onBookmarkToggle,
 }) => {
   const isLong = variant === 'long';
-
   const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
 
   return (
     <div
       className={`
-      ${isLong ? 'bg-[#F3F3F4]' : 'bg-white'} 
-      border border-[#D7D7D7] rounded-[8px] 
-      flex flex-col overflow-hidden h-[185px] w-full 
-      hover:shadow-sm transition-all group cursor-pointer
-    `}
+        ${isLong ? 'bg-[#F3F3F4]' : 'bg-white'} 
+        border border-[#D7D7D7] rounded-[8px] 
+        flex flex-col overflow-hidden h-[185px] w-full 
+        hover:shadow-sm transition-all group cursor-pointer
+      `}
     >
+      {/* 상단 헤더*/}
       <div className="px-[18px] pt-[10px] pb-[4px] flex justify-between items-center">
         <span className="text-[11px] font-medium text-gray-400">{category}</span>
         <button
@@ -60,10 +60,12 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
       <div className="mx-[18px] border-b border-[#D7D7D7]" />
 
-      <div className="px-[18px] pt-[12px] pb-[2px] flex-grow">
-        <h3 className="text-[18px] font-bold text-black mb-1 leading-[1.2] break-keep">{title}</h3>
-        <p className="text-[12px] text-gray-500 line-clamp-3 leading-relaxed font-light">
-          <span className="font-semibold">AI 요약: </span>
+      <div className="px-[18px] pt-[8px] pb-[2px] flex-grow overflow-hidden">
+        <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.25] break-keep line-clamp-2">
+          {title}
+        </h3>
+        <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">
+          <span className="font-semibold text-[#474747]">AI 요약: </span>
           {cleanSummary}
         </p>
       </div>
