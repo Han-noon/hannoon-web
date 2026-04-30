@@ -18,7 +18,7 @@ const HomePage: React.FC = () => {
   };
 
   const longSummary =
-    'AI요약: 보건복지부는 지방 의료 인력 확충 및 의료 수급 불균형 해소를 위해 대학별 정원 배정 위원회를 가동하여 인원을 확정한다고 발표했습니다. 이번 개혁안은 단순한 인원 증원을 넘어, 필수 의료 분야의 안정적인 인력 공급과 지역 간 의료 격차를 실질적으로 줄이기 위한 다각적인 정책적 지원을 포함하고 있으며, 향후 10년간의 의료 시스템 체질 개선을 목표로 하고 있습니다.';
+    '보건복지부는 지방 의료 인력 확충 및 의료 수급 불균형 해소를 위해 대학별 정원 배정 위원회를 가동하여 인원을 확정한다고 발표했습니다. 이번 개혁안은 단순한 인원 증원을 넘어, 필수 의료 분야의 안정적인 인력 공급과 지역 간 의료 격차를 실질적으로 줄이기 위한 다각적인 정책적 지원을 포함하고 있으며, 향후 10년간의 의료 시스템 체질 개선을 목표로 하고 있습니다.';
 
   const longData = [
     {
@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
     }));
 
   return (
-    <div className="w-full pb-20 bg-white">
+    <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
         <section className="grid grid-cols-2 gap-x-4 mb-14">
           {longData.map((news) => (
@@ -61,6 +61,8 @@ const HomePage: React.FC = () => {
             />
           ))}
         </section>
+
+        {/* 이슈 브리핑 헤더 */}
         <section className="mb-8 flex items-start gap-4">
           <h2 className="text-[24px] font-bold text-black tracking-tight leading-none shrink-0">
             이슈 브리핑
@@ -72,6 +74,8 @@ const HomePage: React.FC = () => {
             </p>
           </div>
         </section>
+
+        {/* 뉴스 카드 그리드 */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
           {briefingData.map((news) => (
             <NewsCard
@@ -82,6 +86,7 @@ const HomePage: React.FC = () => {
             />
           ))}
         </section>
+
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
