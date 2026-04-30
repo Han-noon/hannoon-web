@@ -23,6 +23,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
   const isLong = variant === 'long';
 
+  const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
+
   return (
     <div
       className={`
@@ -60,8 +62,9 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
       <div className="px-[18px] pt-[12px] pb-[2px] flex-grow">
         <h3 className="text-[18px] font-bold text-black mb-1 leading-[1.2] break-keep">{title}</h3>
-        <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">
-          {summary}
+        <p className="text-[12px] text-gray-500 line-clamp-3 leading-relaxed font-light">
+          <span className="font-semibold">AI 요약: </span>
+          {cleanSummary}
         </p>
       </div>
 
