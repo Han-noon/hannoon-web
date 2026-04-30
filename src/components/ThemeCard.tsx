@@ -28,6 +28,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
       style={{ minHeight: '280px' }}
       className="relative w-full bg-white border border-[#D7D7D7] rounded-[8px] flex flex-col overflow-hidden hover:shadow-sm transition-all group cursor-pointer"
     >
+      {/* 상단 영역 */}
       <div className="px-[18px] pt-[18px] pb-[10px] flex justify-between items-center">
         <span className="px-4 py-1 bg-gray-100 text-gray-500 text-[11px] font-bold rounded-full uppercase tracking-wider">
           {category}
@@ -54,6 +55,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
         </button>
       </div>
 
+      {/* 본문 섹션 */}
       <div className="px-[18px] pt-[10px] flex-grow overflow-hidden">
         <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.2] break-keep">
           {title}
@@ -64,6 +66,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
         </p>
       </div>
 
+      {/* 하단 날짜 */}
       <div className="px-[18px] pb-[24px] text-[11px] text-[#474747] flex flex-col gap-1.5 mt-auto">
         <div className="flex items-center">
           <span className="w-14 text-gray-400">최초 보도:</span>
