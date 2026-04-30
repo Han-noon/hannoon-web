@@ -1,17 +1,17 @@
 export interface Category {
-  id: 'all' | 'blank' | 'mismatch';
+  id: string;
   title: string;
   description: string;
 }
 
 export interface Article {
   id: number;
-  type: 'blank' | 'mismatch';
+  type: string;
   source: string;
   updateTime: string;
   title: string;
   summary: string;
-  imgUrl: string;
+  imgUrl: string; // 이미지 URL 타입
 }
 
 export const categories: Category[] = [
@@ -34,6 +34,7 @@ export const categories: Category[] = [
   },
 ];
 
+// --- 수정된 부분: imgUrl에 랜덤 이미지 서비스 적용 ---
 export const mockArticles: Article[] = [
   {
     id: 1,
@@ -42,9 +43,9 @@ export const mockArticles: Article[] = [
     updateTime: '2시간 전',
     title: '1차 개혁안 발표',
     summary:
-      '보건복지부는 지방 의료의 필수 인력인 외과 및 소아과 부족 문제를 해결하기 위해 의과대학 정원을 25% 증원한다고 발표했습니다. 하지만 일각에서는 구체적인 예산 확보 방안이 빠져있다는 지적이 나오고 있습니다.',
-    imgUrl:
-      'https://images.unsplash.com/photo-1590496794008-383c8070b257?auto=format&fit=crop&q=80&w=600',
+      '1차 개혁안 발표. 보건복지부는 지방 의료의 필수 인력인 외과 및 소아과 부족 문제를 해결하기 위해 의과대학 정원을 25% 증원한다고 발표했습니다. 발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표발표',
+    // article의 id(1)를 random 파라미터로 사용
+    imgUrl: 'https://picsum.photos/600/400?random=1',
   },
   {
     id: 2,
@@ -54,8 +55,8 @@ export const mockArticles: Article[] = [
     title: '[속보] 특징주 A사, 상한가 직행...',
     summary:
       '특징주 A사 상한가. A사 특징주 상한가 직행. 오늘의 특징주 A사. 특징주 A사 상한가. A사 특징주 상한가 직행. (구체적인 기업 분석이나 원인 분석 내용 없음)',
-    imgUrl:
-      'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=600',
+    // article의 id(2)를 random 파라미터로 사용
+    imgUrl: 'https://picsum.photos/600/400?random=2',
   },
   {
     id: 3,
@@ -65,8 +66,8 @@ export const mockArticles: Article[] = [
     title: '충격! 국민배우 B씨, 결국...',
     summary:
       '국민배우 B씨가 오늘 오후 예정되었던 팬사인회에 감기 몸살로 인해 10분 지각하여 팬들의 아쉬움을 샀다. 소속사 측은 건강 관리에 유의하겠다고 밝혔다.',
-    imgUrl:
-      'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&q=80&w=600',
+    // article의 id(3)를 random 파라미터로 사용
+    imgUrl: 'https://picsum.photos/600/400?random=3',
   },
   {
     id: 4,
@@ -76,7 +77,7 @@ export const mockArticles: Article[] = [
     title: '오늘의 날씨 서울 날씨 부산 날씨',
     summary:
       '오늘의 날씨 서울 날씨 부산 날씨 대구 날씨 광주 날씨 대전 날씨 실시간 날씨 날씨 예보 오늘의 날씨 서울 날씨 부산 날씨 대구 날씨 광주 날씨',
-    imgUrl:
-      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=600',
+    // article의 id(4)를 random 파라미터로 사용
+    imgUrl: 'https://picsum.photos/600/400?random=4',
   },
 ];

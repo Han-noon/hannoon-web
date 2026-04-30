@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { categories, mockArticles, Category } from './AbusingData';
+import { categories, mockArticles, type Article } from '../data/AbusingData';
 
-export default function AbusingArticleList() {
-  const [activeCategory, setActiveCategory] = useState<Category['id']>('all');
+export default function App() {
+  const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  const filteredArticles =
+  const filteredArticles: Article[] =
     activeCategory === 'all'
       ? mockArticles
       : mockArticles.filter((article) => article.type === activeCategory);
@@ -109,7 +109,8 @@ export default function AbusingArticleList() {
                       <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight hover:text-blue-600 cursor-pointer transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-[15px] text-gray-600 leading-relaxed text-justify">
+                      {/* 변경된 부분: line-clamp-3 추가 */}
+                      <p className="text-[15px] text-gray-600 leading-relaxed text-justify line-clamp-3">
                         <span className="font-semibold text-gray-800 mr-1">AI 요약:</span>
                         {article.summary}
                       </p>
