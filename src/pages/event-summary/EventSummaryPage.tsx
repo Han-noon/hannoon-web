@@ -5,10 +5,14 @@ import BiasInfo from '@/pages/event-summary/components/main/statistics/BiasInfo'
 import TimelineSummaryInfo from '@/pages/event-summary/components/main/statistics/TimelineSummaryInfo';
 import AbusingInfo from '@/pages/event-summary/components/main/statistics/AbusingInfo';
 import ArticleCard from '@/pages/event-summary/components/article-list/ArticleCard';
+import Pagination from '@/components/Pagination';
+import { useState } from 'react';
+import TimeFilteringBtn from '@/pages/event-summary/components/article-list/TimeFilteringBtn';
+import BiasFilteringBtn from '@/pages/event-summary/components/article-list/BiasFilteringBtn';
 
 const EventSummaryPage = () => {
+  const [currentPage, setCurrentPage] = useState(1);
   const dummy = EVENT_SUMMARY_DATA[0];
-  //console.log(dummy);
 
   return (
     <div className="w-full">
@@ -42,14 +46,15 @@ const EventSummaryPage = () => {
       <section className="my-16">
         <div className="flex justify-between mb-4">
           <h1 className="text-2xl font-bold">요약에 사용된 기사 리스트</h1>
-          <div>
-            <button>전체</button>
-            <button>과거순</button>
+          <div className="text-sm flex gap-2">
+            <BiasFilteringBtn />
+            <TimeFilteringBtn />
           </div>
         </div>
         <ArticleCard />
         <ArticleCard />
         <ArticleCard />
+        <Pagination currentPage={currentPage} totalPages={3} onPageChange={setCurrentPage} />
       </section>
     </div>
   );
