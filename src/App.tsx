@@ -1,7 +1,7 @@
 import HomePage from '@/pages/HomePage.tsx';
 import MyPage from '@/pages/MyPage';
 import SignInPage from '@/pages/SignInPage';
-import EventDetailPage from '@/pages/EventDetailPage';
+import EventSummaryPage from '@/pages/event-summary/EventSummaryPage';
 import { Route, Routes } from 'react-router-dom';
 import TimelinePage from '@/pages/TimelinePage';
 import AbusingPage from '@/pages/Abusing';
@@ -14,7 +14,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/signin" element={<SignInPage />}></Route>
         <Route path="/mypage" element={<MyPage />}></Route>
-        <Route path="/event-detail" element={<EventDetailPage />}></Route>
+        <Route path="/event-detail" element={<EventSummaryPage />}></Route>
         <Route path="/timeline" element={<TimelinePage />}></Route>
         <Route path="/abusing" element={<AbusingPage />}></Route>
       </Route>
