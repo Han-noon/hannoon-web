@@ -1,11 +1,28 @@
+import { useState } from 'react';
+
 const Meta = () => {
+  const [showToast, setShowToast] = useState(false);
+
+  const handleAlertClick = () => {
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   return (
     <>
+      {showToast && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray47 text-white px-6 py-3 rounded-full shadow-lg z-50 transition-opacity duration-300">
+          실시간 알림 신청이 완료되었습니다!
+        </div>
+      )}
+
       {/* 상단 */}
       <div className="flex justify-between items-center border-b-4 border-gray47 pb-1">
         <p className="text-base w-28">사건요약</p>
         <p className="text-xl">정치</p>
-        <button className="text-base">실시간 알림 받기</button>
+        <button className="text-base" onClick={handleAlertClick}>
+          실시간 알림 받기
+        </button>
       </div>
 
       {/* 하단 */}
