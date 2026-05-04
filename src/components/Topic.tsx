@@ -1,8 +1,16 @@
 export const THEME_CONFIG: Record<
   number,
-  { topic: string; title: string; summary: string; firstDate: string; latestDate: string }
+  {
+    category: string;
+    topic: string;
+    title: string;
+    summary: string;
+    firstDate: string;
+    latestDate: string;
+  }
 > = {
   1: {
+    category: '정치',
     topic: '의료개혁',
     title: '필수의료 붕괴 방지 및 의대 정원 확대 방안',
     summary:
@@ -11,6 +19,7 @@ export const THEME_CONFIG: Record<
     latestDate: '2026.10.30',
   },
   2: {
+    category: '경제',
     topic: '통화 정책 방향',
     title: '금리 동결 및 가계부채 관리를 위한 통화 정책',
     summary:
@@ -19,6 +28,7 @@ export const THEME_CONFIG: Record<
     latestDate: '2026.10.28',
   },
   3: {
+    category: '사회',
     topic: '스마트 모빌리티',
     title: '자율주행 기반 대중교통 시스템 정식 도입 계획',
     summary:
