@@ -10,9 +10,10 @@ import Layout from '@/layout/Layout';
 function App() {
   return (
     <Routes>
+      <Route path="/signin" element={<SignInPage />}></Route>
+
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/signin" element={<SignInPage />}></Route>
         <Route path="/mypage" element={<MyPage />}></Route>
         <Route path="/event-detail" element={<EventDetailPage />}></Route>
         <Route path="/timeline" element={<TimelinePage />}></Route>
