@@ -1,177 +1,166 @@
-import React, { useState } from 'react';
-import { TimelineData } from '../data/TimelineData';
+import { useState, useMemo } from 'react';
+import { TimelineData, type Milestone } from '../data/TimelineData';
 
-export default function TimelinePage() {
-  const [isAsc, setIsAsc] = useState(true);
+const TimelinePage = () => {
+  const [timelineEvents] = useState<Milestone[]>(TimelineData);
   const [showToast, setShowToast] = useState(false);
-
-  const sortedData = isAsc ? [...TimelineData] : [...TimelineData].reverse();
+  const [isAscending, setIsAscending] = useState(true);
+  const [selectedId, setSelectedId] = useState('summary');
 
   const handleAlertClick = () => {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  const toggleSortOrder = () => {
+    setIsAscending((prev) => !prev);
+  };
+
+  const displayList = useMemo(() => {
+    const summaryItem = timelineEvents.find((item) => item.id === 'summary');
+    const restItems = timelineEvents.filter((item) => item.id !== 'summary');
+    const sortedRest = isAscending ? [...restItems] : [...restItems].reverse();
+    return summaryItem ? [summaryItem, ...sortedRest] : sortedRest;
+  }, [timelineEvents, isAscending]);
+
+  const activeItem = timelineEvents.find((item) => item.id === selectedId) || timelineEvents[0];
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans pb-24">
+    <main className="w-full max-w-[1300px] mx-auto bg-white min-h-screen text-black pb-20 relative font-sans">
       {showToast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#474747] text-white px-6 py-3 rounded-full shadow-lg z-50 transition-opacity duration-300">
+        <div className="text-center w-3/4 md:w-auto text-sm md:text-base px-6 py-3 fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#474747] text-white rounded-full shadow-lg z-50 transition-opacity duration-300">
           실시간 알림 신청이 완료되었습니다!
         </div>
       )}
 
-      <div className="max-w-[1300px] mx-auto px-4 sm:px-8 pt-12">
-        <div className="flex justify-between items-end mb-4 relative">
-          <div className="text-black text-xl md:text-2xl font-bold tracking-widest uppercase">
-            Timeline
+      <div className="px-6 md:px-12 pt-8 md:pt-10">
+        <div className="grid grid-cols-3 items-end pb-2">
+          <div className="text-left">
+            <p className="text-base md:text-lg font-medium tracking-wider text-[#333]">TIMELINE</p>
           </div>
-          <div className="absolute left-1/2 -translate-x-1/2 text-black text-xl md:text-2xl font-bold">
-            정치
+          <div className="text-center">
+            <p className="text-base md:text-lg font-medium text-[#333]">정치</p>
           </div>
-          <button
-            onClick={handleAlertClick}
-            className="text-black text-sm md:text-lg font-medium hover:font-bold transition-all focus:outline-none"
-          >
-            실시간 알림받기
-          </button>
+          <div className="text-right">
+            <button
+              className="text-sm md:text-base font-medium text-[#555] hover:text-black transition-colors"
+              onClick={handleAlertClick}
+            >
+              <span className="hidden md:inline">실시간 알림받기</span>
+              <span className="md:hidden">알림받기</span>
+            </button>
+          </div>
         </div>
+        <div className="border-b-[4px] border-[#222]"></div>
+        <div className="border-b-[1px] border-[#222] mt-[3px]"></div>
+      </div>
 
-        <div className="w-full h-1 bg-[#474747] mb-[20px]"></div>
-        <div className="w-full h-[2px] bg-[#474747] mb-12"></div>
+      <h1 className="text-center text-[28px] md:text-[32px] font-bold mt-10 md:mt-12 mb-8 md:mb-10 tracking-tight">
+        12·3 비상계엄 사태
+      </h1>
 
-        <h1 className="text-center text-5xl md:text-6xl font-bold text-black mb-12 tracking-tight">
-          의료 개혁
-        </h1>
+      <div className="px-6 md:px-12 mb-5">
+        <button
+          onClick={toggleSortOrder}
+          className="flex items-center gap-1.5 bg-[#d9d9d9] px-3.5 py-1.5 border border-[#c4c4c4] rounded-sm shadow-sm hover:bg-[#d0d0d0] transition-colors inline-flex"
+        >
+          <div className="flex flex-col gap-[3px] text-[#222]">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={!isAscending ? 'rotate-180 transition-transform' : 'transition-transform'}
+            >
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={!isAscending ? 'rotate-180 transition-transform' : 'transition-transform'}
+            >
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+          </div>
+          <span className="text-sm tracking-[1.5px] font-medium mt-0.5">
+            {isAscending ? '과거순' : '최신순'}
+          </span>
+        </button>
+      </div>
 
-        <div className="flex justify-start mb-4">
-          <button
-            type="button"
-            onClick={() => setIsAsc(!isAsc)}
-            className="flex items-center justify-center gap-2 w-[100px] h-8 bg-[#d9d9d9] hover:bg-gray-300 rounded text-black text-sm font-medium transition-colors focus:outline-none"
-          >
-            <div className="flex flex-col items-center">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                className={isAsc ? 'text-black' : 'text-gray-400'}
-              >
-                <path d="m18 15-6-6-6 6" />
-              </svg>
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                className={!isAsc ? 'text-black' : 'text-gray-400'}
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </div>
-            {isAsc ? '과거순' : '최신순'}
-          </button>
-        </div>
-        <div className="w-full h-[2px] bg-[#474747] mb-16"></div>
+      <div className="w-full border-t border-[#a0a0a0] mb-10 md:mb-12"></div>
 
-        <div className="relative">
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-[#474747] hidden md:block z-0"></div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-16 md:gap-y-24 pt-8 md:pt-16">
-            {sortedData.map((item, index) => {
-              const isRightText = index % 2 === 0;
-
+      <section className="flex flex-col lg:flex-row px-6 md:px-12 gap-12 lg:gap-10">
+        <div className="w-full lg:w-[32%] relative pl-2 lg:pl-4">
+          <div className="absolute left-[19px] lg:left-[27px] top-[14px] bottom-[14px] w-[2px] bg-[#474747] z-0"></div>
+          <ul className="flex flex-col gap-8 md:gap-14 relative z-10 m-0 p-0 list-none">
+            {displayList.map((item) => {
+              const isActive = item.id === selectedId;
+              const isSummary = item.id === 'summary';
               return (
-                <React.Fragment key={item.id}>
-                  <div
-                    className={`w-full flex ${isRightText ? 'justify-center md:justify-end pr-0 md:pr-[50px]' : 'justify-center md:justify-end pr-0 md:pr-[50px] order-2 md:order-none'} relative`}
-                  >
-                    <div className="absolute right-[-14px] top-[46px] w-7 h-7 bg-[#474747] rounded-full border-4 border-[#f8f9fa] z-10 hidden md:block"></div>
-
-                    {isRightText ? (
-                      <img
-                        src={item.imageUrl}
-                        className="w-full max-w-[560px] h-auto md:h-[400px] aspect-video md:aspect-auto object-cover rounded-lg shadow-md"
-                        alt={item.title}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full max-w-[560px] flex flex-col pt-4 md:pt-0">
-                        <div className="flex justify-between items-end pb-3 mb-6 relative">
-                          <div className="absolute bottom-0 left-0 right-0 md:right-[-50px] h-[2px] bg-[#474747]"></div>
-                          <span className="text-gray-500 text-lg md:text-xl font-medium z-10 bg-[#f8f9fa] pr-4">
-                            {item.date}
-                          </span>
-                          <span className="text-[#474747] text-5xl md:text-6xl font-bold z-10 bg-[#f8f9fa] pl-4 leading-none tracking-tighter">
-                            #{String(index + 1).padStart(2, '0')}
-                          </span>
-                        </div>
-                        <h2 className="text-black text-3xl md:text-4xl font-bold mb-4 line-clamp-1">
-                          {item.title}
-                        </h2>
-                        <p className="font-normal text-lg md:text-xl leading-relaxed text-gray-700 line-clamp-4 mb-6">
-                          {item.summary}
-                        </p>
-                        <div className="text-right">
-                          <a
-                            href={item.link}
-                            className="text-blue-600 text-base md:text-lg font-medium hover:text-blue-800 hover:underline transition-colors"
-                          >
-                            전문 보러 가기 →
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    className={`w-full flex ${isRightText ? 'justify-center md:justify-start pl-0 md:pl-[50px] order-2 md:order-none' : 'justify-center md:justify-start pl-0 md:pl-[50px]'}`}
-                  >
-                    {isRightText ? (
-                      <div className="w-full max-w-[560px] flex flex-col pt-4 md:pt-0">
-                        <div className="flex justify-between items-end pb-3 mb-6 relative">
-                          <div className="absolute bottom-0 right-0 left-0 md:left-[-50px] h-[2px] bg-[#474747]"></div>
-                          <span className="text-[#474747] text-5xl md:text-6xl font-bold z-10 bg-[#f8f9fa] pr-4 leading-none tracking-tighter">
-                            #{String(index + 1).padStart(2, '0')}
-                          </span>
-                          <span className="text-gray-500 text-lg md:text-xl font-medium z-10 bg-[#f8f9fa] pl-4">
-                            {item.date}
-                          </span>
-                        </div>
-                        <h2 className="text-black text-3xl md:text-4xl font-bold mb-4 line-clamp-1">
-                          {item.title}
-                        </h2>
-                        <p className="font-normal text-lg md:text-xl leading-relaxed text-gray-700 line-clamp-4 mb-6">
-                          {item.summary}
-                        </p>
-                        <div className="text-right">
-                          <a
-                            href={item.link}
-                            className="text-blue-600 text-base md:text-lg font-medium hover:text-blue-800 hover:underline transition-colors"
-                          >
-                            전문 보러 가기 →
-                          </a>
-                        </div>
+                <li key={item.id} className="flex items-start gap-4 md:gap-5 w-full">
+                  <div className="relative w-6 h-6 flex-shrink-0 flex items-center justify-center bg-white z-10 mt-[3px]">
+                    {isSummary ? (
+                      <div className="w-[18px] h-[18px] rounded-full border-[2px] border-[#474747] flex items-center justify-center bg-white">
+                        <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
                       </div>
                     ) : (
-                      <img
-                        src={item.imageUrl}
-                        className="w-full max-w-[560px] h-auto md:h-[400px] aspect-video md:aspect-auto object-cover rounded-lg shadow-md"
-                        alt={item.title}
-                        loading="lazy"
-                      />
+                      <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
                     )}
                   </div>
-                </React.Fragment>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(item.id)}
+                    className={`text-left break-words w-full transition-colors mt-[3px] ${
+                      isActive
+                        ? 'font-bold text-black'
+                        : 'font-medium text-gray-700 hover:text-black'
+                    }`}
+                  >
+                    <span className="text-[17px] md:text-[20px] leading-tight block">
+                      {item.title}
+                    </span>
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
-      </div>
-    </div>
+
+        <article className="w-full lg:w-[68%] flex flex-col lg:pr-12 min-w-0">
+          <img
+            src={activeItem?.imageUrl}
+            alt={activeItem?.title}
+            className="w-full aspect-video object-cover rounded-sm mb-8 md:mb-10 bg-[#ccc] shadow-sm transition-opacity duration-300"
+          />
+          <div className="text-base md:text-[18px] leading-relaxed md:leading-[32px] text-[#222] mb-12 font-medium w-full">
+            <p>{activeItem?.summary}</p>
+          </div>
+          <div className="flex justify-end mt-auto">
+            <a
+              href={activeItem?.link}
+              className="text-base md:text-lg font-bold text-gray-800 hover:text-gray-500 transition-colors flex items-center gap-1.5"
+            >
+              통계자료 같이 보기{' '}
+              <span aria-hidden="true" className="font-normal">
+                →
+              </span>
+            </a>
+          </div>
+        </article>
+      </section>
+    </main>
   );
-}
+};
+
+export default TimelinePage;
