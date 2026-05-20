@@ -44,3 +44,7 @@ jobs:
       # --delete는 dist에 없는 오래된 S3 파일을 삭제해 배포 결과를 최신 상태로 맞춥니다.
       - name: Deploy to S3
         run: aws s3 sync dist/ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+
+      # CloudFront 배포 전체에 대해 모든 경로의 캐시를 새로고침 
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --paths "/*"
