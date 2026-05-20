@@ -44,3 +44,8 @@ jobs:
       # --delete는 dist에 없는 오래된 S3 파일을 삭제해 배포 결과를 최신 상태로 맞춥니다.
       - name: Deploy to S3
         run: aws s3 sync dist/ s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete
+
+      # CloudFront에서 엔트리포인트만 캐시 무효화합니다.
+      # 해시된 정적 자산은 파일명이 바뀌므로 전체 배포 무효화가 필요하지 않습니다.
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --paths "/" "/index.html"
