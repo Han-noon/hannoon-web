@@ -31,6 +31,10 @@ jobs:
       # TypeScript 검사와 Vite 프로덕션 빌드를 실행해 dist 폴더를 생성합니다.
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_ONESIGNAL_APP_ID: ${{ secrets.VITE_ONESIGNAL_APP_ID }}
 
       # GitHub Actions Secrets에 저장한 AWS 키와 리전으로 AWS CLI 권한을 설정합니다.
       - name: Configure AWS credentials
