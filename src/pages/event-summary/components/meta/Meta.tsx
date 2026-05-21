@@ -1,6 +1,7 @@
+import type { EventSummary } from '@/types/eventSummary';
 import { useState } from 'react';
 
-const Meta = () => {
+const Meta = ({ event }: { event: EventSummary }) => {
   const [showToast, setShowToast] = useState(false);
 
   const handleAlertClick = () => {
@@ -19,7 +20,7 @@ const Meta = () => {
       {/* 상단 */}
       <div className="flex justify-between items-center border-b-4 border-gray47 pb-1 text-sm md:text-base">
         <p className="md:w-28">사건요약</p>
-        <p className="text-base md:text-xl">정치</p>
+        <p className="text-base md:text-xl">{event.category}</p>
         <button className="" onClick={handleAlertClick}>
           <span className="hidden md:inline">실시간 알림 받기</span>
           <span className="md:hidden">알림받기</span>
@@ -32,13 +33,15 @@ const Meta = () => {
           <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-slate-500"></div>
           <div className="ml-2 md:ml-4">
             <p className="text-gray-700">최초 보도</p>
-            <p className="text-sm md:text-base">2024.05.24</p>
+            <p className="text-sm md:text-base">
+              {event.created_at.slice(0, 10).replaceAll('-', '.')}
+            </p>
           </div>
         </div>
         <div className="py-2 w-full lg:w-auto flex flex-col justify-center items-center order-3 lg:order-2">
-          <p>[의료개혁]</p>
+          <p>[누락]</p>
           <h1 className="text-lg md:text-2xl font-bold md:pb-4 md:mt-1 text-center">
-            정부, 의대 정원 증원 발표정부
+            {event.title}
           </h1>
         </div>
         <div
@@ -49,13 +52,14 @@ const Meta = () => {
             <p className="text-gray-700">
               최근 업데이트<span className="sm:hidden"> / 분석 기사 수</span>
             </p>
-            <p className="text-sm ms:text-base">
-              2024.05.30<span className="sm:hidden"> / 143</span>
+            <p className="text-sm md:text-base">
+              {event.updated_at.slice(0, 10).replaceAll('-', '.')}
+              <span className="sm:hidden"> / {event.article_count}</span>
             </p>
           </div>
           <div className="text-right hidden sm:block">
             <p className="text-gray-700">분석 기사 수</p>
-            <p className="text-sm md:text-base">143개</p>
+            <p className="text-sm md:text-base">{event.article_count}개</p>
           </div>
         </div>
       </div>

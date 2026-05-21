@@ -1,10 +1,14 @@
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import type { AbusInfo } from '@/data/EventSummaryData';
 
 const PATH_COLOR = '#7859B4'; // 차트에 표시될 선
 const TRAIL_COLOR = '#D9D9D9'; // 차트의 배경선
 
-export const CircularProgressChart = ({ total, abusing }: AbusInfo) => {
+interface info {
+  total: number;
+  abusing: number;
+}
+
+export const CircularProgressChart = ({ total, abusing }: info) => {
   return (
     <CircularProgressbar
       value={(abusing / total) * 100}
