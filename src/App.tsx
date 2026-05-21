@@ -7,7 +7,31 @@ import TimelinePage from '@/pages/TimelinePage';
 import AbusingPage from '@/pages/Abusing';
 import Layout from '@/layout/Layout';
 
+import OneSignal from 'react-onesignal';
+import { useEffect } from 'react';
+
 function App() {
+  useEffect(() => {
+    // OneSignal 초기화 함수
+    const initOneSignal = async () => {
+      try {
+        await OneSignal.init({
+          appId: import.meta.env.VITE_ONESIGNAL_APP_ID!,
+          allowLocalhostAsSecureOrigin: true,
+          notifyButton: {
+            enable: true, // 기본 종 모양 구독 버튼 활성화
+          } as any,
+        });
+
+        console.log('OneSignal 초기화 성공!');
+      } catch (error) {
+        console.error('OneSignal 초기화 실패:', error);
+      }
+    };
+
+    initOneSignal();
+  }, []);
+
   return (
     <Routes>
       <Route path="/signin" element={<SignInPage />}></Route>
