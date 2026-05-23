@@ -29,7 +29,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const handleCardClick = () => {
     const recent = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
     const newItem = { id, themeId, category, title, summary, date };
-    const filtered = [newItem, ...recent.filter((item: any) => item.id !== id)].slice(0, 12);
+    const filtered = [newItem, ...recent.filter((item: any) => item.id !== id)].slice(0, 50);
     localStorage.setItem('recentViewedNews', JSON.stringify(filtered));
   };
 
