@@ -5,10 +5,13 @@ import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
 import Modal from './Modal';
 
+const ITEMS_PER_PAGE = 6;
+
 const getThemeIdByNewsId = (newsId: number) => {
   if (newsId === 100) return 1;
   if (newsId === 101) return 2;
-  if (newsId >= 200) return ((newsId - 200) % 3) + 1;
+  // 💡 [수정] 15개의 테마에 매핑되도록 % 15 로 변경했습니다.
+  if (newsId >= 200) return ((newsId - 200) % 15) + 1;
   return 1;
 };
 
@@ -23,7 +26,6 @@ const MyPage: React.FC = () => {
   const [scrappedNewsIds, setScrappedNewsIds] = useState<number[]>([]);
   const [recentNews, setRecentNews] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 1;
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -43,6 +45,20 @@ const MyPage: React.FC = () => {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 💡 [추가된 부분] 페이지가 변경될 때마다 화면 최상단으로 부드럽게 스크롤 이동
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  const toggleScrap = (id: number) => {
+    setScrappedNewsIds((prev) => {
+      const isScrapped = prev.includes(id);
+      const nextScraps = isScrapped ? prev.filter((item) => item !== id) : [...prev, id];
+      localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
+      return nextScraps;
+    });
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -89,6 +105,9 @@ const MyPage: React.FC = () => {
   }, [activeTab]);
 
   const scrappedThemeIds = Array.from(new Set(scrappedNewsIds.map((id) => getThemeIdByNewsId(id))));
+
+  const currentTotalItems = activeTab === 'scrapped' ? scrappedThemeIds.length : recentNews.length;
+  const totalPages = Math.max(1, Math.ceil(currentTotalItems / ITEMS_PER_PAGE));
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -191,6 +210,9 @@ const MyPage: React.FC = () => {
   }
 
   const renderTabContent = () => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+
     if (activeTab === 'scrapped') {
       if (scrappedThemeIds.length === 0) {
         return (
@@ -213,7 +235,10 @@ const MyPage: React.FC = () => {
           </div>
         );
       }
-      return scrappedThemeIds.map((id) => {
+
+      const paginatedScrapped = scrappedThemeIds.slice(startIndex, endIndex);
+
+      return paginatedScrapped.map((id) => {
         const theme = THEME_CONFIG && THEME_CONFIG[id];
         if (!theme) return null;
         return (
@@ -230,6 +255,17 @@ const MyPage: React.FC = () => {
               setScrappedNewsIds((prev) => {
                 const nextScraps = prev.filter((newsId) => getThemeIdByNewsId(newsId) !== themeId);
                 localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
+
+                const remainingItems = Array.from(
+                  new Set(nextScraps.map((nid) => getThemeIdByNewsId(nid)))
+                ).length;
+                if (
+                  remainingItems > 0 &&
+                  currentPage > Math.ceil(remainingItems / ITEMS_PER_PAGE)
+                ) {
+                  setCurrentPage(Math.ceil(remainingItems / ITEMS_PER_PAGE));
+                }
+
                 return nextScraps;
               });
             }}
@@ -261,7 +297,10 @@ const MyPage: React.FC = () => {
           </div>
         );
       }
-      return recentNews.map((news) => {
+
+      const paginatedRecent = recentNews.slice(startIndex, endIndex);
+
+      return paginatedRecent.map((news) => {
         if (!news) return null;
         const targetTheme = THEME_CONFIG && news.themeId ? THEME_CONFIG[news.themeId] : null;
         return (
@@ -380,13 +419,19 @@ const MyPage: React.FC = () => {
         <div className="flex items-end justify-between mb-10 border-b border-gray-300">
           <div className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('scrapped')}
+              onClick={() => {
+                setActiveTab('scrapped');
+                setCurrentPage(1);
+              }}
               className={`text-[14px] pb-1 transition-all ${activeTab === 'scrapped' ? 'font-bold text-black border-b-2 border-black' : 'text-gray-300 font-normal hover:text-gray-500'}`}
             >
               스크랩한 토픽
             </button>
             <button
-              onClick={() => setActiveTab('recent')}
+              onClick={() => {
+                setActiveTab('recent');
+                setCurrentPage(1);
+              }}
               className={`text-[14px] pb-1 transition-all ${activeTab === 'recent' ? 'font-bold text-black border-b-2 border-black' : 'text-gray-300 font-normal hover:text-gray-500'}`}
             >
               최근 본 사건
@@ -418,11 +463,13 @@ const MyPage: React.FC = () => {
           {renderTabContent()}
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        {currentTotalItems > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
 
         <Modal
           isOpen={isDeleteModalOpen}
