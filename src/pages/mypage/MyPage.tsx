@@ -226,7 +226,13 @@ const MyPage: React.FC = () => {
             firstReportDate={theme.firstDate || ''}
             latestReportDate={theme.latestDate || ''}
             isBookmarked={true}
-            onBookmarkToggle={() => {}}
+            onBookmarkToggle={(themeId) => {
+              setScrappedNewsIds((prev) => {
+                const nextScraps = prev.filter((newsId) => getThemeIdByNewsId(newsId) !== themeId);
+                localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
+                return nextScraps;
+              });
+            }}
           />
         );
       });
