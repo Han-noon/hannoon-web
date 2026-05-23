@@ -3,6 +3,7 @@ import NewsCard from '@/components/NewsCard';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
+import Modal from './Modal';
 
 const getThemeIdByNewsId = (newsId: number) => {
   if (newsId === 100) return 1;
@@ -11,67 +12,80 @@ const getThemeIdByNewsId = (newsId: number) => {
   return 1;
 };
 
-const Modal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-  confirmText: string;
-}> = ({ isOpen, onClose, onConfirm, title, message, confirmText }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-[340px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-        <div className="pt-9 pb-7 px-7 text-center">
-          <h2 className="text-[15px] font-bold text-black mb-2.5 tracking-tight">{title}</h2>
-          <p className="text-[12px] text-gray-400 leading-relaxed font-light break-keep whitespace-pre-wrap px-1">
-            {message}
-          </p>
-        </div>
-        <div className="flex border-t border-gray-50 h-[44px]">
-          <button
-            onClick={onClose}
-            className="flex-1 text-[13px] text-gray-300 font-medium hover:bg-gray-50 transition-colors"
-          >
-            취소
-          </button>
-          <div className="w-[1px] bg-gray-50" />
-          <button
-            onClick={onConfirm}
-            className="flex-1 text-[13px] text-black font-bold hover:bg-gray-50 transition-colors"
-          >
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+interface UserData {
+  nickname: string;
+  email: string;
+  profileImage: string | null;
+}
 
 const MyPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'scrapped' | 'recent'>('scrapped');
   const [scrappedNewsIds, setScrappedNewsIds] = useState<number[]>([]);
   const [recentNews, setRecentNews] = useState<any[]>([]);
-
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 1;
 
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFetchError, setIsFetchError] = useState<boolean>(false);
+
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(
-    localStorage.getItem('userProfileImage')
-  );
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const savedScraps = JSON.parse(localStorage.getItem('scrappedNewsIds') || '[]');
-    const savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
-    const cleanHistory = savedHistory.filter((item: any) => item.themeId !== undefined);
-    setScrappedNewsIds(savedScraps);
-    setRecentNews(cleanHistory);
-    setCurrentPage(1); // 탭 전환 시 페이지 리셋
+    setIsLoading(true);
+    setTimeout(() => {
+      try {
+        const savedNickname = '공오삼';
+        const savedEmail = 'test053@gmail.com';
+        const savedImg = localStorage.getItem('userProfileImage');
+
+        if (!savedNickname || !savedEmail) {
+          throw new Error('Failed to fetch user profile data.');
+        }
+
+        setUserData({
+          nickname: savedNickname,
+          email: savedEmail,
+          profileImage: savedImg,
+        });
+        setIsFetchError(false);
+
+        let savedScraps = [];
+        let savedHistory = [];
+        try {
+          savedScraps = JSON.parse(localStorage.getItem('scrappedNewsIds') || '[]');
+          savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
+        } catch (e) {
+          console.error('Localstorage data corrupted:', e);
+        }
+
+        const cleanHistory = Array.isArray(savedHistory)
+          ? savedHistory.filter((item: any) => item && item.themeId !== undefined)
+          : [];
+
+        setScrappedNewsIds(Array.isArray(savedScraps) ? savedScraps : []);
+        setRecentNews(cleanHistory);
+        setCurrentPage(1);
+      } catch (error) {
+        console.error(error);
+        setIsFetchError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 500);
   }, [activeTab]);
 
   const scrappedThemeIds = Array.from(new Set(scrappedNewsIds.map((id) => getThemeIdByNewsId(id))));
@@ -81,30 +95,202 @@ const MyPage: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setProfileImage(base64);
-        localStorage.setItem('userProfileImage', base64);
+        try {
+          const base64 = reader.result as string;
+          if (!base64) throw new Error('Encoding failed');
+
+          setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: base64 } : null));
+          localStorage.setItem('userProfileImage', base64);
+        } catch (error) {
+          setErrorModal({
+            isOpen: true,
+            title: '이미지 변경 실패',
+            message: '이미지 처리 과정에서 오류가 발생했습니다. 다시 시도해 주세요.',
+          });
+        }
+      };
+      reader.onerror = () => {
+        setErrorModal({
+          isOpen: true,
+          title: '이미지 변경 실패',
+          message: '파일을 읽어오는 중 에러가 발생했습니다. 다시 시도해 주세요.',
+        });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleDeleteImage = () => {
-    setProfileImage(null);
+    setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: null } : null));
     localStorage.removeItem('userProfileImage');
     setIsDeleteModalOpen(false);
+  };
+
+  const handleWithdraw = () => {
+    setIsWithdrawModalOpen(false);
+    const isDbSuccess = window.navigator.onLine;
+
+    if (!isDbSuccess) {
+      setErrorModal({
+        isOpen: true,
+        title: '회원 탈퇴 실패',
+        message:
+          '처리 오류로 인해 탈퇴 처리가 완료되지 않았습니다. 잠시 후 서버가 안정되면 다시 시도해 주세요.',
+      });
+      return;
+    }
+
+    localStorage.clear();
+    alert('탈퇴되었습니다.');
+    window.location.href = '/';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (isFetchError || !userData) {
+    return (
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center px-6">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-50 rounded-full mb-4">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ef4444"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-bold text-black mb-2">회원 정보를 조회할 수 없습니다.</h2>
+          <p className="text-[14px] text-gray-400 font-light mb-6 break-keep">
+            서버 통신 장애로 마이페이지 데이터를 불러오지 못했습니다.
+            <br />
+            다시 시도해주세요.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-black text-white rounded-[10px] text-[13px] font-medium hover:bg-gray-800 transition-colors"
+          >
+            페이지 새로고침
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const renderTabContent = () => {
+    if (activeTab === 'scrapped') {
+      if (scrappedThemeIds.length === 0) {
+        return (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-16 text-center w-full">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3.5 border border-gray-100">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <p className="text-[14px] text-gray-400 font-light">스크랩한 토픽이 없습니다.</p>
+          </div>
+        );
+      }
+      return scrappedThemeIds.map((id) => {
+        const theme = THEME_CONFIG && THEME_CONFIG[id];
+        if (!theme) return null;
+        return (
+          <ThemeCard
+            key={id}
+            id={id}
+            category={theme.category || '미분류'}
+            title={theme.topic || '제목 없음'}
+            summary={theme.summary || ''}
+            firstReportDate={theme.firstDate || ''}
+            latestReportDate={theme.latestDate || ''}
+            isBookmarked={true}
+            onBookmarkToggle={() => {}}
+          />
+        );
+      });
+    }
+
+    if (activeTab === 'recent') {
+      if (recentNews.length === 0) {
+        return (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-16 text-center w-full">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3.5 border border-gray-100">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <p className="text-[14px] text-gray-400 font-light">최근 본 사건이 없습니다.</p>
+          </div>
+        );
+      }
+      return recentNews.map((news) => {
+        if (!news) return null;
+        const targetTheme = THEME_CONFIG && news.themeId ? THEME_CONFIG[news.themeId] : null;
+        return (
+          <NewsCard
+            key={news.id}
+            {...news}
+            category={targetTheme ? targetTheme.topic : '미분류'}
+            isBookmarked={scrappedNewsIds.includes(news.id)}
+            onBookmarkToggle={(id) => {
+              const updated = scrappedNewsIds.includes(id)
+                ? scrappedNewsIds.filter((i) => i !== id)
+                : [...scrappedNewsIds, id];
+              setScrappedNewsIds(updated);
+              localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+            }}
+          />
+        );
+      });
+    }
+    return null;
   };
 
   return (
     <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
-        {/* 프로필 섹션 */}
         <section className="flex flex-col md:flex-row md:items-end justify-between pb-8 mb-10">
           <div className="flex items-center space-x-8">
             <div className="relative">
               <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center border border-gray-200 shadow-sm overflow-hidden">
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                {userData.profileImage ? (
+                  <img
+                    src={userData.profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <svg
                     width="50"
@@ -167,8 +353,10 @@ const MyPage: React.FC = () => {
               className="hidden"
             />
             <div>
-              <h2 className="text-[28px] font-bold text-black mb-1 leading-none">공오삼</h2>
-              <p className="text-gray-400 font-light text-[14px]">test053@gmail.com</p>
+              <h2 className="text-[28px] font-bold text-black mb-1 leading-none">
+                {userData.nickname}
+              </h2>
+              <p className="text-gray-400 font-light text-[14px]">{userData.email}</p>
             </div>
           </div>
           <div className="mt-6 md:mt-0">
@@ -183,7 +371,6 @@ const MyPage: React.FC = () => {
           </div>
         </section>
 
-        {/* 탭 & 탈퇴 버튼 */}
         <div className="flex items-end justify-between mb-10 border-b border-gray-300">
           <div className="flex space-x-8">
             <button
@@ -222,38 +409,7 @@ const MyPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 min-h-[300px] items-start">
-          {activeTab === 'scrapped'
-            ? scrappedThemeIds.map((id) => {
-                const theme = THEME_CONFIG[id];
-                return (
-                  <ThemeCard
-                    key={id}
-                    id={id}
-                    category={theme.category}
-                    title={theme.topic}
-                    summary={theme.summary}
-                    firstReportDate={theme.firstDate}
-                    latestReportDate={theme.latestDate}
-                    isBookmarked={true}
-                    onBookmarkToggle={() => {}}
-                  />
-                );
-              })
-            : recentNews.map((news) => (
-                <NewsCard
-                  key={news.id}
-                  {...news}
-                  category={THEME_CONFIG[news.themeId].topic}
-                  isBookmarked={scrappedNewsIds.includes(news.id)}
-                  onBookmarkToggle={(id) => {
-                    const updated = scrappedNewsIds.includes(id)
-                      ? scrappedNewsIds.filter((i) => i !== id)
-                      : [...scrappedNewsIds, id];
-                    setScrappedNewsIds(updated);
-                    localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
-                  }}
-                />
-              ))}
+          {renderTabContent()}
         </div>
 
         <Pagination
@@ -266,20 +422,29 @@ const MyPage: React.FC = () => {
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           onConfirm={handleDeleteImage}
-          title="프로필 이미지 초기화"
-          message="현재 설정된 이미지를 삭제하시겠습니까? 삭제 후에는 기본 프로필로 변경됩니다."
+          title="프로필 이미지 삭제"
+          message={'현재 설정된 이미지를 삭제하시겠습니까?\n삭제 후에는 기본 프로필로 변경됩니다.'}
           confirmText="삭제하기"
         />
+
         <Modal
           isOpen={isWithdrawModalOpen}
           onClose={() => setIsWithdrawModalOpen(false)}
-          onConfirm={() => {
-            alert('탈퇴되었습니다.');
-            setIsWithdrawModalOpen(false);
-          }}
+          onConfirm={handleWithdraw}
           title="계정 탈퇴 확인"
-          message="정말 탈퇴하시겠습니까? 탈퇴 시 모든 활동 기록이 즉시 삭제되며 이는 복구가 불가능합니다."
+          message={
+            '정말 탈퇴하시겠습니까?\n탈퇴 시 모든 활동 기록이 즉시 삭제되며\n이는 복구가 불가능합니다.'
+          }
           confirmText="탈퇴하기"
+        />
+
+        <Modal
+          isOpen={errorModal.isOpen}
+          onClose={() => setErrorModal((prev) => ({ ...prev, isOpen: false }))}
+          onConfirm={() => setErrorModal((prev) => ({ ...prev, isOpen: false }))}
+          title={errorModal.title}
+          message={errorModal.message}
+          confirmText="확인"
         />
       </div>
     </div>
