@@ -1,35 +1,90 @@
-import { useState } from 'react';
+import { notificationDummyData } from '@/data/NotificationData';
+import type { Notification } from '@/data/NotificationData';
+import NotificationItem from '@/layout/components/notification/NotificationItem';
+import { useEffect, useRef, useState } from 'react';
 
 const NotificationBox = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [noti, setNoti] = useState<Notification[]>(notificationDummyData);
+  const NotiBoxRef = useRef<HTMLDivElement | null>(null);
+
+  //포커스아웃 시 알림창 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (NotiBoxRef.current && !NotiBoxRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // 알림 개별 삭제하기
+  function deleteNoti(id: number) {
+    if (!confirm('해당 알림을 삭제하시겠습니까?')) return;
+    const newNotiList: Notification[] = noti?.filter((data) => data.id !== id);
+    setNoti(newNotiList);
+    console.log(noti);
+  }
+
+  function deleteAllNoti() {
+    if (!confirm('모든 알림을 삭제하시겠습니까?')) return;
+    setNoti([]);
+  }
 
   return (
-    <div className="relative">
+    <div ref={NotiBoxRef} className="relative">
       <button
         className="text-[#f6f6f6] text-sm cursor-pointer flex items-center"
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <span className="hidden md:inline">알림</span>
-        <BellIcon />
+        <span className="md:hidden">
+          <BellIcon />
+        </span>
       </button>
       {isOpen && (
-        <div className="w-[350px] bg-[#f6f6f6] absolute top-8 -right-10 p-3 z-[1000] rounded-md shadow-[0_2px_11px_0_rgba(0,0,0,0.25)]">
-          <p className="text-center text-lg mb-6">알림센터</p>
-          <ul>
-            <li className="border-[#e2e2e2] border-b-2">
-              <div className="flex justify-between text-[11px] text-gray-400 mt-2">
-                <p>새로운 사건</p>
-                <p>방금 전</p>
+        <div
+          className="
+            w-[390px]
+            h-[500px]
+            bg-[#f6f6f6]
+            absolute top-8 -right-16
+            z-[1000]
+            rounded-xl
+            shadow-[0_2px_11px_0_rgba(0,0,0,0.25)]
+            overflow-hidden
+          "
+        >
+          <div className="h-full overflow-y-auto overflow-x-hidden flex flex-col items-center">
+            <p className="text-lg fw-700 mb-3 mt-6 text-gray47">알림센터</p>
+            {noti.length > 0 && (
+              <>
+                <button
+                  onClick={deleteAllNoti}
+                  className="text-sm text-[#7f7f7f] self-end mr-5 mb-1 hover:text-gray47"
+                >
+                  전체삭제
+                </button>
+                <ul className="w-[350px] flex flex-col items-center mb-3">
+                  {noti.map((data: Notification) => (
+                    <NotificationItem key={data.id} data={data} onDelete={deleteNoti} />
+                  ))}
+                </ul>
+              </>
+            )}
+            {noti.length < 1 && (
+              <div className="text-[#7f7f7f] text-sm h-full flex flex-col items-center justify-center">
+                <div className="w-10 h-10 rounded-full border border-gray-200 flex justify-center items-center">
+                  <BellIcon />
+                </div>
+                <p className="mb-20 pt-4">받은 알림이 없습니다.</p>
               </div>
-              <p className="py-2">‘의료 개혁’에 새로운 사건이 등록되었습니다.</p>
-            </li>
-          </ul>
-          <button
-            className="w-full text-center mt-3 hover:text-gray-500"
-            onClick={() => setIsOpen(false)}
-          >
-            닫기
-          </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -46,7 +101,7 @@ const BellIcon = () => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className="size-6 md:hidden"
+      className="size-6"
     >
       <path
         strokeLinecap="round"
