@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
+import { getEvents } from '@/api/event/getEvents';
+import type { EventItem } from '@/types/eventCard';
 
 const AlertModal: React.FC<{
   isOpen: boolean;
@@ -40,28 +42,18 @@ const HomePage: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
-  const totalPages = 68;
+
+  const [briefingData, setBriefingData] = useState<EventItem[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  const getThemeIdByNewsId = (newsId: number) => {
-    if (newsId === 100) return 1;
-    if (newsId === 101) return 2;
-    if (newsId >= 200) return ((newsId - 200) % 15) + 1;
-    return 1;
-  };
-
   const handleBookmarkToggle = (newsId: number) => {
-    const themeId = getThemeIdByNewsId(newsId);
     const isCurrentlyScrapped = bookmarkedIds.includes(newsId);
-
     if (!isCurrentlyScrapped) {
-      const hasSameThemeScrapped = bookmarkedIds.some((id) => getThemeIdByNewsId(id) === themeId);
-      if (hasSameThemeScrapped) {
-        setIsDuplicateModalOpen(true);
-      }
       const updated = [...bookmarkedIds, newsId];
       setBookmarkedIds(updated);
       localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
@@ -72,13 +64,30 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const briefingData = Array(9)
-    .fill(null)
-    .map((_, i) => {
-      const newsId = currentPage * 15 + i + 200;
-      const themeId = getThemeIdByNewsId(newsId);
-      return { id: newsId, themeId, date: '2026.10.10' };
-    });
+  useEffect(() => {
+    const fetchBriefings = async () => {
+      setIsLoading(true);
+      try {
+        const response: any = await getEvents(currentPage, 9);
+        console.log('받아온 API 데이터:', response);
+
+        if (response && response.events) {
+          // 💡 수정된 부분: 상단 카드(100, 101)와 절대 겹치지 않도록 1000 단위 베이스 추가
+          const dataWithUniqueIds = response.events.map((item: any, index: number) => ({
+            ...item,
+            id: item.id || 1000 + currentPage * 100 + index,
+          }));
+          setBriefingData(dataWithUniqueIds);
+          setTotalPages(response.total_pages || 1);
+        }
+      } catch (error) {
+        console.error('API 에러:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBriefings();
+  }, [currentPage]);
 
   return (
     <div className="w-full pb-20">
@@ -87,9 +96,9 @@ const HomePage: React.FC = () => {
           <NewsCard
             id={100}
             themeId={1}
-            category={THEME_CONFIG[1].topic}
-            title={THEME_CONFIG[1].title}
-            summary={THEME_CONFIG[1].summary}
+            category={THEME_CONFIG[1]?.topic}
+            title={THEME_CONFIG[1]?.title}
+            summary={THEME_CONFIG[1]?.summary}
             date="2026.10.10"
             variant="long"
             isBookmarked={bookmarkedIds.includes(100)}
@@ -98,9 +107,9 @@ const HomePage: React.FC = () => {
           <NewsCard
             id={101}
             themeId={2}
-            category={THEME_CONFIG[2].topic}
-            title={THEME_CONFIG[2].title}
-            summary={THEME_CONFIG[2].summary}
+            category={THEME_CONFIG[2]?.topic}
+            title={THEME_CONFIG[2]?.title}
+            summary={THEME_CONFIG[2]?.summary}
             date="2026.10.10"
             variant="long"
             isBookmarked={bookmarkedIds.includes(101)}
@@ -120,21 +129,27 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
-          {briefingData.map((news) => (
-            <NewsCard
-              key={news.id}
-              id={news.id}
-              themeId={news.themeId}
-              category={THEME_CONFIG[news.themeId].topic}
-              title={THEME_CONFIG[news.themeId].title}
-              summary={THEME_CONFIG[news.themeId].summary}
-              date={news.date}
-              isBookmarked={bookmarkedIds.includes(news.id)}
-              onBookmarkToggle={handleBookmarkToggle}
-            />
-          ))}
-        </section>
+        {isLoading ? (
+          <div className="w-full h-[300px] flex items-center justify-center text-gray-500">
+            데이터를 불러오는 중...
+          </div>
+        ) : (
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
+            {briefingData.map((news) => (
+              <NewsCard
+                key={news.id}
+                id={news.id}
+                themeId={news.eventId}
+                category={news.category || '미분류'}
+                title={news.title || '제목 없음'}
+                summary={news.summary || ''}
+                date={news.date}
+                isBookmarked={bookmarkedIds.includes(news.id)}
+                onBookmarkToggle={handleBookmarkToggle}
+              />
+            ))}
+          </section>
+        )}
 
         <Pagination
           currentPage={currentPage}
