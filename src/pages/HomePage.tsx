@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
   const getThemeIdByNewsId = (newsId: number) => {
     if (newsId === 100) return 1;
     if (newsId === 101) return 2;
-    if (newsId >= 200) return ((newsId - 200) % 3) + 1;
+    if (newsId >= 200) return ((newsId - 200) % 15) + 1;
     return 1;
   };
 
@@ -75,7 +75,7 @@ const HomePage: React.FC = () => {
   const briefingData = Array(9)
     .fill(null)
     .map((_, i) => {
-      const newsId = currentPage * 10 + i + 200;
+      const newsId = currentPage * 15 + i + 200;
       const themeId = getThemeIdByNewsId(newsId);
       return { id: newsId, themeId, date: '2026.10.10' };
     });
@@ -108,7 +108,6 @@ const HomePage: React.FC = () => {
           />
         </section>
 
-        {/* ⭐️ [Restoration] 이슈 브리핑 섹션 문구 및 디자인 복구 */}
         <section className="mb-8 flex items-start gap-4">
           <h2 className="text-[24px] font-bold text-black tracking-tight leading-none shrink-0">
             이슈 브리핑
