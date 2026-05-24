@@ -10,7 +10,6 @@ const ITEMS_PER_PAGE = 6;
 const getThemeIdByNewsId = (newsId: number) => {
   if (newsId === 100) return 1;
   if (newsId === 101) return 2;
-  // 💡 [수정] 15개의 테마에 매핑되도록 % 15 로 변경했습니다.
   if (newsId >= 200) return ((newsId - 200) % 15) + 1;
   return 1;
 };
@@ -34,6 +33,8 @@ const MyPage: React.FC = () => {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const gridRef = useRef<HTMLDivElement>(null);
+
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -46,9 +47,13 @@ const MyPage: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 💡 [추가된 부분] 페이지가 변경될 때마다 화면 최상단으로 부드럽게 스크롤 이동
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (gridRef.current) {
+      const yOffset = -80;
+      const element = gridRef.current;
+      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   }, [currentPage]);
 
   const toggleScrap = (id: number) => {
@@ -416,7 +421,10 @@ const MyPage: React.FC = () => {
           </div>
         </section>
 
-        <div className="flex items-end justify-between mb-10 border-b border-gray-300">
+        <div
+          ref={gridRef}
+          className="flex items-end justify-between mb-10 border-b border-gray-300"
+        >
           <div className="flex space-x-8">
             <button
               onClick={() => {
