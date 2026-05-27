@@ -1,7 +1,9 @@
+import type { Menu } from '@/types/header';
+
 interface MobileMenuProps {
   isMenuOpen: boolean;
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  menus: string[];
+  menus: Menu[];
 }
 
 const MobileMenu = ({ isMenuOpen, setIsMenuOpen, menus }: MobileMenuProps) => {
@@ -49,12 +51,15 @@ const MobileMenu = ({ isMenuOpen, setIsMenuOpen, menus }: MobileMenuProps) => {
         <div className="mt-10 flex flex-col items-center">
           {menus.map((item) => (
             <button
-              key={item}
+              key={item.label}
               type="button"
               className="text-black text-[18px] font-semibold py-4 w-full hover:bg-[#e1dfdf]"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={() => {
+                setIsMenuOpen(false);
+                item.onClick();
+              }}
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </div>
