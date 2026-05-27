@@ -9,8 +9,12 @@ import Layout from '@/layout/Layout';
 
 import OneSignal from 'react-onesignal';
 import { useEffect } from 'react';
+import NotificationPage from '@/pages/NotificationPage';
+import useOrientationSync from '@/hooks/useOrientationSync';
 
 function App() {
+  useOrientationSync();
+
   useEffect(() => {
     // OneSignal 초기화 함수
     const initOneSignal = async () => {
@@ -29,7 +33,8 @@ function App() {
       }
     };
 
-    initOneSignal();
+    // 배포환경에서만 실행
+    if (import.meta.env.PROD) initOneSignal();
   }, []);
 
   return (
@@ -43,6 +48,8 @@ function App() {
         <Route path="/timeline" element={<TimelinePage />}></Route>
         <Route path="/abusing" element={<AbusingPage />}></Route>
       </Route>
+
+      <Route path="/notification" element={<NotificationPage />} />
     </Routes>
   );
 }

@@ -1,38 +1,53 @@
+import Pagination from '@/components/Pagination';
+import { notificationDummyData } from '@/data/NotificationData';
+import type { Notification } from '@/data/NotificationData';
+import NotificationItem from '@/layout/components/notification/NotificationItem';
 import { useState } from 'react';
 
 const NotificationBox = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [noti, setNoti] = useState<Notification[]>(notificationDummyData);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 알림 개별 삭제
+  function deleteNoti(id: number) {
+    if (!confirm('해당 알림을 삭제하시겠습니까?')) return;
+    const newNotiList: Notification[] = noti?.filter((data) => data.id !== id);
+    setNoti(newNotiList);
+  }
+
+  // 알림 전체 삭제
+  function deleteAllNoti() {
+    if (!confirm('모든 알림을 삭제하시겠습니까?')) return;
+    setNoti([]);
+  }
 
   return (
-    <div className="relative">
-      <button
-        className="text-[#f6f6f6] text-sm cursor-pointer flex items-center"
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <span className="hidden md:inline">알림</span>
-        <BellIcon />
-      </button>
-      {isOpen && (
-        <div className="w-[350px] bg-[#f6f6f6] absolute top-8 -right-10 p-3 z-[1000] rounded-md shadow-[0_2px_11px_0_rgba(0,0,0,0.25)]">
-          <p className="text-center text-lg mb-6">알림센터</p>
-          <ul>
-            <li className="border-[#e2e2e2] border-b-2">
-              <div className="flex justify-between text-[11px] text-gray-400 mt-2">
-                <p>새로운 사건</p>
-                <p>방금 전</p>
-              </div>
-              <p className="py-2">‘의료 개혁’에 새로운 사건이 등록되었습니다.</p>
-            </li>
-          </ul>
+    <>
+      {noti.length > 0 && (
+        <>
           <button
-            className="w-full text-center mt-3 hover:text-gray-500"
-            onClick={() => setIsOpen(false)}
+            onClick={deleteAllNoti}
+            className="text-sm text-[#7f7f7f] self-end mr-5 mb-1 hover:text-gray47"
           >
-            닫기
+            전체삭제
           </button>
+          <ul className="w-full px-4 flex flex-col items-center">
+            {noti.map((data: Notification) => (
+              <NotificationItem key={data.id} data={data} onDelete={deleteNoti} />
+            ))}
+          </ul>
+          <Pagination currentPage={currentPage} totalPages={3} onPageChange={setCurrentPage} />
+        </>
+      )}
+      {noti.length < 1 && (
+        <div className="text-[#7f7f7f] text-sm h-full flex flex-col items-center justify-center mt-40 md:mt-0">
+          <div className="w-10 h-10 rounded-full border border-gray-200 flex justify-center items-center">
+            <BellIcon />
+          </div>
+          <p className="mb-20 pt-4">받은 알림이 없습니다.</p>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -46,7 +61,7 @@ const BellIcon = () => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className="size-6 md:hidden"
+      className="size-6"
     >
       <path
         strokeLinecap="round"

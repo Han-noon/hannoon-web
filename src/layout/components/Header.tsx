@@ -1,18 +1,37 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import headerBg from '@/assets/back1.jpg';
-import NotificationBox from '@/layout/components/notification/NotificationBox';
 import MobileMenu from '@/layout/components/menu/MobileMenu';
+import useNotificationStore from '@/store/notificationStore';
+import useMediaQuery from '@/hooks/useMediaQuery';
+import { useLocation, useNavigate } from 'react-router-dom';
+import NotificationModalWrapper from '@/layout/components/notification/NotificationModalWrapper';
+import useClickOutside from '@/hooks/useClickOutside';
 
 const Header = () => {
-  const [keyword, setKeyword] = useState('');
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // 모바일용 햄버거바
-  const searchId = useId();
-
   const menus = ['내 정보', '소개', '로그아웃'];
+  const [keyword, setKeyword] = useState('');
+  const searchId = useId();
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // 모바일용 햄버거바
 
-  const onSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-  };
+  // 알림
+  const { isOpen, backgroundPath, open, close } = useNotificationStore();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  function handleNotification() {
+    if (isOpen) {
+      close();
+      if (!isDesktop) navigate(backgroundPath); // 모바일 버전에서 이전 페이지로
+    } else {
+      open(location.pathname); // 현재 페이지 기억
+      if (!isDesktop) navigate('/notification'); // 모바일 버전이면 라우팅, md 버전이면 모달
+    }
+  }
+
+  //포커스아웃 시 알림창 닫기(md 버전만 해당)
+  const NotiBoxRef = useRef<HTMLDivElement | null>(null);
+  useClickOutside(NotiBoxRef, close);
 
   return (
     <header
@@ -23,10 +42,21 @@ const Header = () => {
     >
       {/* 로고 & 사용자 관련 네비 */}
       <div className="w-full h-16 flex justify-between items-center px-5 md:px-16">
-        <h1 className="font-bold text-[#f6f6f6] text-xl md:text-2xl">한 눈</h1>
+        <h1 className="text-[#f6f6f6] text-2xl md:text-3xl font-[EbsHunmin]">한 눈</h1>
         <nav aria-label="주요 메뉴" className="flex justify-between items-center md:w-56">
           {/* 알림 */}
-          <NotificationBox />
+          <div ref={NotiBoxRef} className="relative">
+            <button
+              className="text-[#f6f6f6] text-sm cursor-pointer flex items-center"
+              onClick={handleNotification}
+            >
+              <span className="hidden md:inline">알림</span>
+              <span className="md:hidden">
+                <BellIcon />
+              </span>
+            </button>
+            {isOpen && <NotificationModalWrapper />}
+          </div>
 
           {/* pc버전 나머지 메뉴 */}
           <div className="hidden md:block">
@@ -44,7 +74,7 @@ const Header = () => {
           {/* 모바일버전 메뉴 */}
           <button
             type="button"
-            className="md:hidden"
+            className="md:hidden ml-3"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             aria-label="메뉴 열기"
           >
@@ -58,7 +88,9 @@ const Header = () => {
       </h1>
       <div className="flex justify-center">
         <form
-          onSubmit={onSearch}
+          onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+          }}
           role="search"
           className="mt-3 md:mt-6 mx-6 h-9 md:h-11 max-w-[800px] w-full flex items-center bg-[#ffffff26] rounded-[30px] overflow-hidden border border-solid border-[#cbcbcba1] backdrop-blur-[12.5px]"
         >
@@ -107,16 +139,36 @@ const MenuIcon = () => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="none"
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="white"
-      className="size-7"
+      className="h-7 w-6"
     >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+      />
+    </svg>
+  );
+};
+
+const BellIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="size-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
       />
     </svg>
   );

@@ -5,7 +5,7 @@ import Footer from './components/Footer';
 
 const Layout = () => {
   return (
-    <div className="relative min-h-screen bg-[#f8f9fa] w-full overflow-x-hidden">
+    <div className="relative min-h-screen w-full overflow-x-hidden">
       <div className="bg-[#f8f9fa] pb-[267px] flex flex-col items-center">
         <Header />
         <Category />
