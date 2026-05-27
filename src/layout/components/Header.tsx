@@ -6,20 +6,58 @@ import useMediaQuery from '@/hooks/useMediaQuery';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationModalWrapper from '@/layout/components/notification/NotificationModalWrapper';
 import useClickOutside from '@/hooks/useClickOutside';
+import useSession from '@/hooks/useSession';
+import { signOut } from '@/api/auth/signOut';
+import type { Menu } from '@/types/header';
 
 const Header = () => {
-  const menus = ['내 정보', '소개', '로그아웃'];
+  const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const searchId = useId();
   const [isMenuOpen, setIsMenuOpen] = useState(false); // 모바일용 햄버거바
 
+  function signInRequired() {
+    if (confirm('로그인이 필요한 기능입니다. 로그인하시겠습니까?')) navigate('/signin');
+    else return;
+  }
+
+  async function handleSignOut() {
+    if (!confirm('로그아웃 하시겠습니까?')) return;
+
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const { session } = useSession();
+  const menus: Menu[] = [
+    {
+      label: '내 정보',
+      onClick: () => {
+        session ? navigate('/mypage') : signInRequired();
+      },
+    },
+    {
+      label: '소개',
+      onClick: () => navigate('/'),
+    },
+    {
+      label: session ? '로그아웃' : '로그인',
+      onClick: session ? handleSignOut : () => navigate('/signIn'),
+    },
+  ];
+
   // 알림
   const { isOpen, backgroundPath, open, close } = useNotificationStore();
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const navigate = useNavigate();
   const location = useLocation();
 
   function handleNotification() {
+    if (!session) return signInRequired();
+
     if (isOpen) {
       close();
       if (!isDesktop) navigate(backgroundPath); // 모바일 버전에서 이전 페이지로
@@ -43,14 +81,14 @@ const Header = () => {
       {/* 로고 & 사용자 관련 네비 */}
       <div className="w-full h-16 flex justify-between items-center px-5 md:px-16">
         <h1 className="text-[#f6f6f6] text-2xl md:text-3xl font-[EbsHunmin]">한 눈</h1>
-        <nav aria-label="주요 메뉴" className="flex justify-between items-center md:w-56">
+        <nav aria-label="주요 메뉴" className="flex justify-between items-center md:w-60">
           {/* 알림 */}
           <div ref={NotiBoxRef} className="relative">
             <button
               className="text-[#f6f6f6] text-sm cursor-pointer flex items-center"
               onClick={handleNotification}
             >
-              <span className="hidden md:inline">알림</span>
+              <span className="hidden md:inline md:mr-6">알림</span>
               <span className="md:hidden">
                 <BellIcon />
               </span>
@@ -59,14 +97,15 @@ const Header = () => {
           </div>
 
           {/* pc버전 나머지 메뉴 */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex md:flex-1 justify-between">
             {menus.map((item) => (
               <button
-                key={item}
+                key={item.label}
                 type="button"
-                className={`${item === '로그아웃' ? 'md:ml-7' : ''} text-[#f6f6f6] text-sm p-0 cursor-pointer`}
+                onClick={item.onClick}
+                className={`${item.label === '로그아웃' && '로그인' ? 'md:pl-7' : ''} text-[#f6f6f6] text-sm p-0 cursor-pointer`}
               >
-                {item}
+                {item.label}
               </button>
             ))}
           </div>
