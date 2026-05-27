@@ -7,7 +7,7 @@ interface NotificationItemProps {
 
 const NotificationItem = ({ data, onDelete }: NotificationItemProps) => {
   return (
-    <li className="text-[#7f7f7f] w-full bg-white rounded-xl h-[90px] px-4 py-[10px] shadow-[0_1px_5px_0_rgba(0,0,0,0.13)] mb-3">
+    <li className="text-[#7f7f7f] w-full bg-white rounded-xl min-h-[90px] px-4 py-[10px] shadow-[0_1px_5px_0_rgba(0,0,0,0.13)] mb-3">
       <div className="flex justify-between text-xs mt-2 relative">
         {!data.isRead && (
           <div className="w-1 h-1 bg-red-600 rounded-full absolute bottom-[17px] -left-1"></div>
@@ -18,13 +18,13 @@ const NotificationItem = ({ data, onDelete }: NotificationItemProps) => {
             type="button"
             className="text-white"
             onClick={() => onDelete(data.id)}
-            aria-label="앎림 개별 삭제"
+            aria-label="알림 개별 삭제"
           >
             <DeleteIcon />
           </button>
         </div>
       </div>
-      <p className="text-gray47 text-[15px] pt-3 line-clamp-1">
+      <p className="text-gray47 text-[15px] pt-3 line-clamp-2">
         '{data.topic}'에 대한 새로운 사건이 등록되었습니다.
       </p>
     </li>
