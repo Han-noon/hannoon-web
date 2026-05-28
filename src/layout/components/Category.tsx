@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const Category = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const currentCategory = searchParams.get('category') || '전체';
 
   const categories = ['전체', '정치', '경제', '사회'];
   const dropMenus = [
@@ -41,7 +44,12 @@ const Category = () => {
           {categories.map((c) => (
             <button
               key={c}
-              className="whitespace-nowrap text-[#a3a3a3] hover:text-[#474747] font-medium border-0"
+              onClick={() => setSearchParams({ category: c })}
+              className={`whitespace-nowrap font-medium border-0 transition-colors ${
+                currentCategory === c
+                  ? 'text-[#474747] font-bold'
+                  : 'text-[#a3a3a3] hover:text-[#474747]'
+              }`}
             >
               {c}
             </button>
