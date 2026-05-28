@@ -4,6 +4,8 @@ import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
 import Modal from './Modal';
+import { getProfile } from '@/api/profile/getProfile';
+import { updateProfileImage } from '@/api/profile/updateProfileImage';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -56,43 +58,26 @@ const MyPage: React.FC = () => {
     }
   }, [currentPage]);
 
-  const toggleScrap = (id: number) => {
-    setScrappedNewsIds((prev) => {
-      const isScrapped = prev.includes(id);
-      const nextScraps = isScrapped ? prev.filter((item) => item !== id) : [...prev, id];
-      localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
-      return nextScraps;
-    });
-  };
-
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+
       try {
-        const savedNickname = '공오삼';
-        const savedEmail = 'test053@gmail.com';
-        const savedImg = localStorage.getItem('userProfileImage');
-
-        if (!savedNickname || !savedEmail) {
-          throw new Error('Failed to fetch user profile data.');
-        }
-
+        const profileData = await getProfile();
         setUserData({
-          nickname: savedNickname,
-          email: savedEmail,
-          profileImage: savedImg,
+          nickname: profileData.name || '이름 없음',
+          email: profileData.email || '',
+          profileImage: profileData.profile_image_url || null,
         });
         setIsFetchError(false);
+      } catch (error) {
+        console.error('프로필 정보를 불러오지 못했습니다:', error);
+        setIsFetchError(true);
+      }
 
-        let savedScraps = [];
-        let savedHistory = [];
-        try {
-          savedScraps = JSON.parse(localStorage.getItem('scrappedNewsIds') || '[]');
-          savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
-        } catch (e) {
-          console.error('Localstorage data corrupted:', e);
-        }
-
+      try {
+        const savedScraps = JSON.parse(localStorage.getItem('scrappedNewsIds') || '[]');
+        const savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
         const cleanHistory = Array.isArray(savedHistory)
           ? savedHistory.filter((item: any) => item && item.themeId !== undefined)
           : [];
@@ -100,54 +85,57 @@ const MyPage: React.FC = () => {
         setScrappedNewsIds(Array.isArray(savedScraps) ? savedScraps : []);
         setRecentNews(cleanHistory);
         setCurrentPage(1);
-      } catch (error) {
-        console.error(error);
-        setIsFetchError(true);
+      } catch (e) {
+        console.error('Localstorage data corrupted:', e);
       } finally {
         setIsLoading(false);
       }
-    }, 500);
+    };
+
+    fetchData();
   }, [activeTab]);
 
   const scrappedThemeIds = Array.from(new Set(scrappedNewsIds.map((id) => getThemeIdByNewsId(id))));
-
   const currentTotalItems = activeTab === 'scrapped' ? scrappedThemeIds.length : recentNews.length;
   const totalPages = Math.max(1, Math.ceil(currentTotalItems / ITEMS_PER_PAGE));
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        try {
-          const base64 = reader.result as string;
-          if (!base64) throw new Error('Encoding failed');
+    if (!file) return;
 
-          setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: base64 } : null));
-          localStorage.setItem('userProfileImage', base64);
-        } catch (error) {
-          setErrorModal({
-            isOpen: true,
-            title: '이미지 변경 실패',
-            message: '이미지 처리 과정에서 오류가 발생했습니다. 다시 시도해 주세요.',
-          });
-        }
-      };
-      reader.onerror = () => {
-        setErrorModal({
-          isOpen: true,
-          title: '이미지 변경 실패',
-          message: '파일을 읽어오는 중 에러가 발생했습니다. 다시 시도해 주세요.',
-        });
-      };
-      reader.readAsDataURL(file);
+    setIsLoading(true);
+    try {
+      const newUrl = await updateProfileImage(file);
+      setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: newUrl } : null));
+    } catch (error) {
+      console.error('이미지 변경 통신 에러:', error);
+      setErrorModal({
+        isOpen: true,
+        title: '이미지 변경 실패',
+        message: '서버와 통신 중 오류가 발생했습니다. \n다시 시도해 주세요.',
+      });
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleDeleteImage = () => {
-    setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: null } : null));
-    localStorage.removeItem('userProfileImage');
-    setIsDeleteModalOpen(false);
+  const handleDeleteImage = async () => {
+    setIsLoading(true);
+    try {
+      await updateProfileImage(null);
+      setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: null } : null));
+    } catch (error) {
+      console.error('이미지 삭제 통신 에러:', error);
+      setErrorModal({
+        isOpen: true,
+        title: '이미지 삭제 실패',
+        message: '서버와 통신 중 오류가 발생했습니다. \n다시 시도해 주세요.',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsDeleteModalOpen(false);
+    }
   };
 
   const handleWithdraw = () => {
@@ -169,7 +157,7 @@ const MyPage: React.FC = () => {
     window.location.href = '/';
   };
 
-  if (isLoading) {
+  if (isLoading && !userData) {
     return (
       <div className="w-full min-h-[60vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
@@ -330,30 +318,28 @@ const MyPage: React.FC = () => {
 
   return (
     <div className="w-full pb-20">
+      {isLoading && userData && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-white/50 backdrop-blur-sm">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+        </div>
+      )}
+
       <div className="max-w-[880px] mx-auto px-6 pt-10">
         <section className="flex flex-col md:flex-row md:items-end justify-between pb-8 mb-10">
           <div className="flex items-center space-x-8">
             <div className="relative">
               <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center border border-gray-200 shadow-sm overflow-hidden">
-                {userData.profileImage ? (
-                  <img
-                    src={userData.profileImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <svg
-                    width="50"
-                    height="50"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#94a3b8"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                )}
+                <img
+                  src={userData.profileImage || '/default-profile.png'}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes('default-profile.png')) {
+                      target.src = '/default-profile.png';
+                    }
+                  }}
+                />
               </div>
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center bg-white border border-gray-200 rounded-full px-2.5 py-1.5 shadow-lg space-x-2 z-10">
                 <button
@@ -415,7 +401,7 @@ const MyPage: React.FC = () => {
                 스크랩한 토픽
               </p>
               <p className="text-[34px] font-bold text-black leading-none">
-                {scrappedThemeIds.length}
+                {scrappedNewsIds.length}
               </p>
             </div>
           </div>

@@ -3,10 +3,10 @@ import React from 'react';
 interface NewsCardProps {
   id: number;
   themeId: number;
-  category: string;
-  title: string;
-  summary: string;
-  date: string;
+  category?: string;
+  title?: string;
+  summary?: string;
+  date?: string;
   variant?: 'default' | 'long';
   isBookmarked: boolean;
   onBookmarkToggle: (newsId: number) => void;
@@ -15,16 +15,17 @@ interface NewsCardProps {
 const NewsCard: React.FC<NewsCardProps> = ({
   id,
   themeId,
-  category,
-  title,
-  summary,
-  date,
+  category = '미분류',
+  title = '제목 없음',
+  summary = '',
+  date = '',
   variant = 'default',
   isBookmarked,
   onBookmarkToggle,
 }) => {
   const isLong = variant === 'long';
-  const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
+
+  const cleanSummary = (summary || '').replace(/^AI 요약:\s*/, '');
 
   const handleCardClick = () => {
     const recent = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
