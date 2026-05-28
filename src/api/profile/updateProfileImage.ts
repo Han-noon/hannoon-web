@@ -28,7 +28,7 @@ export const updateProfileImage = async (fileOrNull: File | null) => {
   }
 
   // DB 업데이트
-  const { data, error: dbError } = await supabase
+  const { error: dbError } = await supabase
     .from('profiles')
     .update({ profile_image_path: finalUrl })
     .eq('id', userId)
