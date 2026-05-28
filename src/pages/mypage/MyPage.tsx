@@ -58,15 +58,6 @@ const MyPage: React.FC = () => {
     }
   }, [currentPage]);
 
-  // const toggleScrap = (id: number) => {
-  //   setScrappedNewsIds((prev) => {
-  //     const isScrapped = prev.includes(id);
-  //     const nextScraps = isScrapped ? prev.filter((item) => item !== id) : [...prev, id];
-  //     localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
-  //     return nextScraps;
-  //   });
-  // };
-
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -105,52 +96,45 @@ const MyPage: React.FC = () => {
   }, [activeTab]);
 
   const scrappedThemeIds = Array.from(new Set(scrappedNewsIds.map((id) => getThemeIdByNewsId(id))));
-
   const currentTotalItems = activeTab === 'scrapped' ? scrappedThemeIds.length : recentNews.length;
   const totalPages = Math.max(1, Math.ceil(currentTotalItems / ITEMS_PER_PAGE));
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result as string;
-          if (!base64) throw new Error('Encoding failed');
+    if (!file) return;
 
-          await updateProfileImage(base64);
-
-          setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: base64 } : null));
-        } catch (error) {
-          setErrorModal({
-            isOpen: true,
-            title: '이미지 변경 실패',
-            message: '서버와 통신 중 오류가 발생했습니다. 다시 시도해 주세요.',
-          });
-        }
-      };
-      reader.onerror = () => {
-        setErrorModal({
-          isOpen: true,
-          title: '이미지 변경 실패',
-          message: '파일을 읽어오는 중 에러가 발생했습니다. 다시 시도해 주세요.',
-        });
-      };
-      reader.readAsDataURL(file);
+    setIsLoading(true);
+    try {
+      const newUrl = await updateProfileImage(file);
+      setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: newUrl } : null));
+    } catch (error) {
+      console.error('이미지 변경 통신 에러:', error);
+      setErrorModal({
+        isOpen: true,
+        title: '이미지 변경 실패',
+        message: '서버와 통신 중 오류가 발생했습니다. \n다시 시도해 주세요.',
+      });
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const handleDeleteImage = async () => {
+    setIsLoading(true);
     try {
       await updateProfileImage(null);
       setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: null } : null));
-      setIsDeleteModalOpen(false);
     } catch (error) {
+      console.error('이미지 삭제 통신 에러:', error);
       setErrorModal({
         isOpen: true,
         title: '이미지 삭제 실패',
-        message: '서버와 통신 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        message: '서버와 통신 중 오류가 발생했습니다. \n다시 시도해 주세요.',
       });
+    } finally {
+      setIsLoading(false);
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -173,7 +157,7 @@ const MyPage: React.FC = () => {
     window.location.href = '/';
   };
 
-  if (isLoading) {
+  if (isLoading && !userData) {
     return (
       <div className="w-full min-h-[60vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
@@ -334,6 +318,12 @@ const MyPage: React.FC = () => {
 
   return (
     <div className="w-full pb-20">
+      {isLoading && userData && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-white/50 backdrop-blur-sm">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+        </div>
+      )}
+
       <div className="max-w-[880px] mx-auto px-6 pt-10">
         <section className="flex flex-col md:flex-row md:items-end justify-between pb-8 mb-10">
           <div className="flex items-center space-x-8">
@@ -344,7 +334,10 @@ const MyPage: React.FC = () => {
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/default-profile.png';
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes('default-profile.png')) {
+                      target.src = '/default-profile.png';
+                    }
                   }}
                 />
               </div>
@@ -408,7 +401,7 @@ const MyPage: React.FC = () => {
                 스크랩한 토픽
               </p>
               <p className="text-[34px] font-bold text-black leading-none">
-                {scrappedThemeIds.length}
+                {scrappedNewsIds.length}
               </p>
             </div>
           </div>
