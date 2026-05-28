@@ -1,11 +1,32 @@
-import { useState, useMemo } from 'react';
-import { TimelineData, type Milestone } from '../data/TimelineData';
+import { useState, useMemo, useEffect } from 'react';
+import { getArticlesByEvent } from '@/api/article/getArticlesByEvent';
+import type { ArticleItem } from '@/types/article';
 
 const TimelinePage = () => {
-  const [timelineEvents] = useState<Milestone[]>(TimelineData);
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [isAscending, setIsAscending] = useState(true);
-  const [selectedId, setSelectedId] = useState('summary');
+  const [selectedLink, setSelectedLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const data = await getArticlesByEvent({
+          eventId: 1,
+        });
+
+        console.log('서버에서 받은 데이터:', data.articles);
+
+        setArticles(data.articles);
+        if (data.articles.length > 0 && !selectedLink) {
+          setSelectedLink(data.articles[0].link);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchArticles();
+  }, []);
 
   const handleAlertClick = () => {
     setShowToast(true);
@@ -17,13 +38,14 @@ const TimelinePage = () => {
   };
 
   const displayList = useMemo(() => {
-    const summaryItem = timelineEvents.find((item) => item.id === 'summary');
-    const restItems = timelineEvents.filter((item) => item.id !== 'summary');
-    const sortedRest = isAscending ? [...restItems] : [...restItems].reverse();
-    return summaryItem ? [summaryItem, ...sortedRest] : sortedRest;
-  }, [timelineEvents, isAscending]);
+    return [...articles].sort((a, b) => {
+      const dateA = new Date(a.published_at).getTime();
+      const dateB = new Date(b.published_at).getTime();
+      return isAscending ? dateA - dateB : dateB - dateA;
+    });
+  }, [articles, isAscending]);
 
-  const activeItem = timelineEvents.find((item) => item.id === selectedId) || timelineEvents[0];
+  const activeItem = articles.find((item) => item.link === selectedLink) || displayList[0];
 
   return (
     <main className="w-full max-w-[1300px] mx-auto bg-white min-h-screen text-black pb-20 relative font-sans">
@@ -105,22 +127,15 @@ const TimelinePage = () => {
           <div className="absolute left-[19px] lg:left-[27px] top-[14px] bottom-[14px] w-[2px] bg-[#474747] z-0"></div>
           <ul className="flex flex-col gap-8 md:gap-14 relative z-10 m-0 p-0 list-none">
             {displayList.map((item) => {
-              const isActive = item.id === selectedId;
-              const isSummary = item.id === 'summary';
+              const isActive = item.link === selectedLink;
               return (
-                <li key={item.id} className="flex items-start gap-4 md:gap-5 w-full">
+                <li key={item.link} className="flex items-start gap-4 md:gap-5 w-full">
                   <div className="relative w-6 h-6 flex-shrink-0 flex items-center justify-center bg-white z-10 mt-[3px]">
-                    {isSummary ? (
-                      <div className="w-[18px] h-[18px] rounded-full border-[2px] border-[#474747] flex items-center justify-center bg-white">
-                        <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
-                      </div>
-                    ) : (
-                      <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
-                    )}
+                    <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedId(item.id)}
+                    onClick={() => setSelectedLink(item.link)}
                     className={`text-left break-words w-full transition-colors mt-[3px] ${
                       isActive
                         ? 'font-bold text-black'
@@ -139,7 +154,7 @@ const TimelinePage = () => {
 
         <article className="w-full lg:w-[68%] flex flex-col lg:pr-12 min-w-0">
           <img
-            src={activeItem?.imageUrl}
+            src={activeItem?.article_image_url ?? undefined}
             alt={activeItem?.title}
             className="w-full aspect-video object-cover rounded-sm mb-8 md:mb-10 bg-[#ccc] shadow-sm transition-opacity duration-300"
           />
