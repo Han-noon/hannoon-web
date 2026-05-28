@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
@@ -47,6 +48,9 @@ const HomePage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const [searchParams] = useSearchParams();
+  const selectedCategory = searchParams.get('category') || '전체';
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
@@ -68,17 +72,20 @@ const HomePage: React.FC = () => {
     const fetchBriefings = async () => {
       setIsLoading(true);
       try {
-        const response: any = await getEvents(currentPage, 9);
+        const categoryParam = selectedCategory === '전체' ? undefined : selectedCategory;
+        const response: any = await getEvents(currentPage, 9, categoryParam);
         console.log('받아온 API 데이터:', response);
 
         if (response && response.events) {
-          // 💡 수정된 부분: 상단 카드(100, 101)와 절대 겹치지 않도록 1000 단위 베이스 추가
           const dataWithUniqueIds = response.events.map((item: any, index: number) => ({
             ...item,
             id: item.id || 1000 + currentPage * 100 + index,
           }));
           setBriefingData(dataWithUniqueIds);
           setTotalPages(response.total_pages || 1);
+        } else {
+          setBriefingData([]);
+          setTotalPages(1);
         }
       } catch (error) {
         console.error('API 에러:', error);
@@ -87,7 +94,7 @@ const HomePage: React.FC = () => {
       }
     };
     fetchBriefings();
-  }, [currentPage]);
+  }, [currentPage, selectedCategory]);
 
   return (
     <div className="w-full pb-20">
@@ -135,27 +142,35 @@ const HomePage: React.FC = () => {
           </div>
         ) : (
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
-            {briefingData.map((news) => (
-              <NewsCard
-                key={news.id}
-                id={news.id}
-                themeId={news.eventId}
-                category={news.category || '미분류'}
-                title={news.title || '제목 없음'}
-                summary={news.summary || ''}
-                date={news.date}
-                isBookmarked={bookmarkedIds.includes(news.id)}
-                onBookmarkToggle={handleBookmarkToggle}
-              />
-            ))}
+            {briefingData.length > 0 ? (
+              briefingData.map((news) => (
+                <NewsCard
+                  key={news.id}
+                  id={news.id}
+                  themeId={news.eventId}
+                  category={news.category || '미분류'}
+                  title={news.title || '제목 없음'}
+                  summary={news.summary || ''}
+                  date={news.date}
+                  isBookmarked={bookmarkedIds.includes(news.id)}
+                  onBookmarkToggle={handleBookmarkToggle}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-16 text-center text-gray-400 text-[14px]">
+                해당 카테고리의 사건이 없습니다.
+              </div>
+            )}
           </section>
         )}
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        {briefingData.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
       <AlertModal
         isOpen={isDuplicateModalOpen}
