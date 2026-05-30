@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
-const TimeFilteringBtn = () => {
-  const [isAsc, setIsAsc] = useState(true);
+interface ChildProps {
+  timeFilter: string | null;
+  setTimeFilter: Dispatch<SetStateAction<string>>;
+}
 
+const TimeFilteringBtn = ({ timeFilter, setTimeFilter }: ChildProps) => {
   return (
     <button
       type="button"
-      onClick={() => setIsAsc(!isAsc)}
-      className="flex items-center justify-center gap-2  w-20 md:w-24 h-8 bg-gray-300 text-xs md:text-sm hover:bg-gray-400"
+      onClick={() => setTimeFilter((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+      className="flex items-center justify-center gap-2 w-20 md:w-24 h-8 bg-[#d9d9d9] border border-[#c4c4c4] text-xs md:text-sm
+       hover:bg-[#d0d0d0] rounded-sm"
     >
       <div className="flex flex-col items-center">
         <svg
@@ -17,7 +21,7 @@ const TimeFilteringBtn = () => {
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className={isAsc ? 'text-black' : 'text-gray-400'}
+          className={timeFilter === 'asc' ? 'text-black' : 'text-gray-400'}
         >
           <path d="m18 15-6-6-6 6" />
         </svg>
@@ -28,12 +32,12 @@ const TimeFilteringBtn = () => {
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className={!isAsc ? 'text-black' : 'text-gray-400'}
+          className={timeFilter === 'desc' ? 'text-black' : 'text-gray-400'}
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
       </div>
-      {isAsc ? '과거순' : '최신순'}
+      {timeFilter === 'asc' ? '과거순' : '최신순'}
     </button>
   );
 };
