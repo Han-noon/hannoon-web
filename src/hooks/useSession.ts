@@ -19,8 +19,8 @@ const useSession = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
 
-      console.log(_event);
-      console.log(session);
+      // console.log(_event);
+      // console.log(session);
     });
 
     return () => {
