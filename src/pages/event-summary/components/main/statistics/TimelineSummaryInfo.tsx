@@ -43,9 +43,9 @@ const TimelineSummaryInfo = ({ event }: { event: EventSummary }) => {
             <p className="truncate">{event.event_title}</p>
           </div>
         </div>
-      </div>{' '}
+      </div>
       {/*토픽 아이디로 바꿔야 함!*/}
-      <ShortcutButton path={`/timeline/${event.event_id}`} name="전체 타임라인 보기" />
+      <ShortcutButton path={`/timeline/${event.topic_id}`} name="전체 타임라인 보기" />
     </section>
   );
 };
