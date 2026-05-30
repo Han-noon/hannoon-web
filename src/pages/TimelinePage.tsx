@@ -1,32 +1,37 @@
 import { useState, useMemo, useEffect } from 'react';
-import { getArticlesByEvent } from '@/api/article/getArticlesByEvent';
+import { getEventsByTopic } from '@/api/event/geteventsbytopic';
 import type { ArticleItem } from '@/types/article';
+import { Link, useParams } from 'react-router-dom';
+import type { EventResponse } from '@/types/timeline';
 
 const TimelinePage = () => {
-  const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [isAscending, setIsAscending] = useState(true);
-  const [selectedLink, setSelectedLink] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [eventsdata, setEventsdata] = useState<EventResponse | null>(null);
+
+  //임시
+  const { topic_id } = useParams();
 
   useEffect(() => {
-    const fetchArticles = async () => {
+    const fetchEvents = async () => {
       try {
-        const data = await getArticlesByEvent({
-          eventId: 1,
+        const data = await getEventsByTopic({
+          p_cursor_id: null,
+          p_order: isAscending ? 'asc' : 'desc',
+          p_size: 20,
+          p_topic_id: Number(topic_id) || 1,
         });
 
-        console.log('서버에서 받은 데이터:', data.articles);
-
-        setArticles(data.articles);
-        if (data.articles.length > 0 && !selectedLink) {
-          setSelectedLink(data.articles[0].link);
-        }
+        setEventsdata(data);
+        console.log('결과:', data);
       } catch (error) {
-        console.error(error);
+        console.error('데이터 페칭 실패:', error);
       }
     };
-    fetchArticles();
-  }, []);
+
+    fetchEvents();
+  }, [topic_id, isAscending]);
 
   const handleAlertClick = () => {
     setShowToast(true);
@@ -37,15 +42,8 @@ const TimelinePage = () => {
     setIsAscending((prev) => !prev);
   };
 
-  const displayList = useMemo(() => {
-    return [...articles].sort((a, b) => {
-      const dateA = new Date(a.published_at).getTime();
-      const dateB = new Date(b.published_at).getTime();
-      return isAscending ? dateA - dateB : dateB - dateA;
-    });
-  }, [articles, isAscending]);
-
-  const activeItem = articles.find((item) => item.link === selectedLink) || displayList[0];
+  const activeItem =
+    eventsdata?.events.find((item) => item.id === selectedId) || eventsdata?.events[0];
 
   return (
     <main className="w-full max-w-[1300px] mx-auto bg-white min-h-screen text-black pb-20 relative font-sans">
@@ -126,16 +124,16 @@ const TimelinePage = () => {
         <div className="w-full lg:w-[32%] relative pl-2 lg:pl-4">
           <div className="absolute left-[19px] lg:left-[27px] top-[14px] bottom-[14px] w-[2px] bg-[#474747] z-0"></div>
           <ul className="flex flex-col gap-8 md:gap-14 relative z-10 m-0 p-0 list-none">
-            {displayList.map((item) => {
-              const isActive = item.link === selectedLink;
+            {eventsdata?.events.map((item) => {
+              const isActive = item.id === selectedId;
               return (
-                <li key={item.link} className="flex items-start gap-4 md:gap-5 w-full">
+                <li key={item.id} className="flex items-start gap-4 md:gap-5 w-full">
                   <div className="relative w-6 h-6 flex-shrink-0 flex items-center justify-center bg-white z-10 mt-[3px]">
                     <div className="w-2.5 h-2.5 bg-[#474747] rounded-full"></div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedLink(item.link)}
+                    onClick={() => setSelectedId(item.id)}
                     className={`text-left break-words w-full transition-colors mt-[3px] ${
                       isActive
                         ? 'font-bold text-black'
@@ -154,7 +152,7 @@ const TimelinePage = () => {
 
         <article className="w-full lg:w-[68%] flex flex-col lg:pr-12 min-w-0">
           <img
-            src={activeItem?.article_image_url ?? undefined}
+            src={activeItem?.event_image_url ?? undefined}
             alt={activeItem?.title}
             className="w-full aspect-video object-cover rounded-sm mb-8 md:mb-10 bg-[#ccc] shadow-sm transition-opacity duration-300"
           />
@@ -162,15 +160,15 @@ const TimelinePage = () => {
             <p>{activeItem?.summary}</p>
           </div>
           <div className="flex justify-end mt-auto">
-            <a
-              href={activeItem?.link}
+            <Link
+              to={`/event-detail/${activeItem?.id}`}
               className="text-base md:text-lg font-bold text-gray-800 hover:text-gray-500 transition-colors flex items-center gap-1.5"
             >
               통계자료 같이 보기{' '}
               <span aria-hidden="true" className="font-normal">
                 →
               </span>
-            </a>
+            </Link>
           </div>
         </article>
       </section>
