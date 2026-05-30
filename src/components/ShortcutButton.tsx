@@ -7,10 +7,7 @@ type Props = {
 
 const ShortcutButton = ({ path, name }: Props) => {
   return (
-    <Link
-      to={path}
-      className="text-sm flex items-center justify-end px-2 text-blue-600 my-6 hover:underline hover:underline-offset-4"
-    >
+    <Link to={path} className="text-sm flex items-center justify-end px-2 hover:text-blue-600 my-6">
       <p>{name}</p>
       <div>
         <svg
