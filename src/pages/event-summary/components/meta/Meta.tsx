@@ -19,11 +19,13 @@ const Meta = ({ event }: { event: EventSummary }) => {
 
       {/* 상단 */}
       <div className="flex justify-between items-center border-b-4 border-gray47 pb-1 text-sm md:text-base">
-        <p className="md:w-28">사건요약</p>
+        <p>사건요약</p>
         <p className="text-base md:text-xl">{event.category}</p>
-        <button className="" onClick={handleAlertClick}>
-          <span className="hidden md:inline">실시간 알림 받기</span>
-          <span className="md:hidden">알림받기</span>
+        <button
+          className="border-b border-gray47 hover:border-blue-600 hover:text-blue-600"
+          onClick={handleAlertClick}
+        >
+          구독하기
         </button>
       </div>
 
@@ -39,9 +41,9 @@ const Meta = ({ event }: { event: EventSummary }) => {
           </div>
         </div>
         <div className="py-2 w-full lg:w-auto flex flex-col justify-center items-center order-3 lg:order-2">
-          <p>[누락]</p>
+          <p>[ {event.topic_title} ]</p>
           <h1 className="text-lg md:text-2xl font-bold md:pb-4 md:mt-1 text-center">
-            {event.title}
+            {event.event_title}
           </h1>
         </div>
         <div

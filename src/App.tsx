@@ -44,9 +44,9 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/mypage" element={<MyPage />}></Route>
-        <Route path="/event-detail" element={<EventSummaryPage />}></Route>
-        <Route path="/timeline" element={<TimelinePage />}></Route>
-        <Route path="/abusing" element={<AbusingPage />}></Route>
+        <Route path="/event-detail/:id" element={<EventSummaryPage />}></Route>
+        <Route path="/timeline/:topic_id" element={<TimelinePage />}></Route>
+        <Route path="/abusing/:id" element={<AbusingPage />}></Route>
       </Route>
 
       <Route path="/notification" element={<NotificationPage />} />

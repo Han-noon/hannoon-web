@@ -15,7 +15,7 @@ const Summary = ({ event }: { event: EventSummary }) => {
           </>
         )}
       </div>
-      <div className="w-full px-2 lg:px-16">{event.summary}</div>
+      <div className="w-full px-2 lg:px-16 text-base/8">{event.summary}</div>
     </article>
   );
 };

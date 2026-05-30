@@ -3,32 +3,34 @@ import Summary from '@/pages/event-summary/components/main/Summary';
 import BiasInfo from '@/pages/event-summary/components/main/statistics/BiasInfo';
 import TimelineSummaryInfo from '@/pages/event-summary/components/main/statistics/TimelineSummaryInfo';
 import AbusingInfo from '@/pages/event-summary/components/main/statistics/AbusingInfo';
-import ArticleCard from '@/pages/event-summary/components/article-list/ArticleCard';
-import Pagination from '@/components/Pagination';
-import TimeFilteringBtn from '@/pages/event-summary/components/article-list/TimeFilteringBtn';
-import BiasFilteringBtn from '@/pages/event-summary/components/article-list/BiasFilteringBtn';
 import { useState, useEffect } from 'react';
 import { getEvent } from '@/api/event/getEvent';
 import type { EventSummary } from '@/types/eventSummary';
+import { useParams } from 'react-router-dom';
+import ArticleList from '@/pages/event-summary/components/article-list/ArticleList';
 
 const EventSummaryPage = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-
   const [event, setEvent] = useState<EventSummary | null>(null);
+  const { id } = useParams();
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const data = await getEvent(1); // 임시: event_id = 1
+        const data = await getEvent(Number(id) || 1); // 임시: event_id = 1
         setEvent(data);
-        console.log(event);
       } catch (error) {
         console.error(error);
       }
     };
 
     fetchEvent();
-  }, []);
+
+    //스크롤바 위로 올리기
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }, [id]);
 
   return (
     <div className="w-full">
@@ -55,19 +57,9 @@ const EventSummaryPage = () => {
         </div>
       </section>
 
-      {/* 요약에 사용된 기사 리스트 */}
+      {/* 요약에 사용된 기사 리스트 - api 별도 요청 */}
       <section className="my-16">
-        <div className="flex flex-col md:flex-row justify-between mb-4">
-          <h1 className="text-lg md:text-2xl font-bold mb-3 md:mb-0">요약에 사용된 기사 리스트</h1>
-          <div className="text-sm flex gap-2">
-            <BiasFilteringBtn />
-            <TimeFilteringBtn />
-          </div>
-        </div>
-        <ArticleCard />
-        <ArticleCard />
-        <ArticleCard />
-        <Pagination currentPage={currentPage} totalPages={3} onPageChange={setCurrentPage} />
+        <ArticleList />
       </section>
     </div>
   );
