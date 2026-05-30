@@ -25,7 +25,7 @@ const NotificationPage = () => {
         </button>
         <p className="text-lg fw-700 mx-auto text-gray47 pr-[20px]">알림</p>
       </div>
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full min-h-[600px]">
         <NotificationBox />
       </div>
     </div>
