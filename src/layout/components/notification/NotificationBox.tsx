@@ -1,45 +1,96 @@
+import { deleteAllNotification } from '@/api/notification/deleteAllNotifications';
+import { deleteNotification } from '@/api/notification/deleteNotification';
+import { getNotifications } from '@/api/notification/getNotifications';
 import Pagination from '@/components/Pagination';
-import { notificationDummyData } from '@/data/NotificationData';
-import type { Notification } from '@/data/NotificationData';
+import Spinner from '@/components/Spinner';
 import NotificationItem from '@/layout/components/notification/NotificationItem';
-import { useState } from 'react';
+import type { NotificationList, Notification } from '@/types/notification';
+import { useEffect, useState } from 'react';
 
 const NotificationBox = () => {
-  const [noti, setNoti] = useState<Notification[]>(notificationDummyData);
+  const [notificationsData, setNotificationsData] = useState<NotificationList | null>(null);
+  const [noti, setNoti] = useState<Notification[] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   // 알림 개별 삭제
-  function deleteNoti(id: number) {
+  async function deleteNoti(id: number) {
     if (!confirm('해당 알림을 삭제하시겠습니까?')) return;
-    const newNotiList: Notification[] = noti?.filter((data) => data.id !== id);
-    setNoti(newNotiList);
+
+    try {
+      await deleteNotification(id);
+
+      if (noti?.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      } else {
+        await fetchNotification();
+      }
+    } catch (error) {
+      console.error('삭제 중 오류 발생:', error);
+    }
+    // TODO: 요청 구조 개선
+    // const newNotiList: Notification[] = noti?.filter((data) => data.id !== id) ?? [];
+    // setNoti(newNotiList);
+    // deleteNotification(id);
   }
 
   // 알림 전체 삭제
-  function deleteAllNoti() {
+  async function deleteAllNoti() {
     if (!confirm('모든 알림을 삭제하시겠습니까?')) return;
-    setNoti([]);
+
+    try {
+      await deleteAllNotification();
+      setNoti([]);
+    } catch (error) {
+      console.error('전체 삭제 중 오류 발생:', error);
+    }
+
+    // setNoti([]);
+    // deleteAllNotification();
   }
+
+  // 알림 리스트 조회 요청
+  async function fetchNotification() {
+    try {
+      const data = await getNotifications(currentPage);
+      setNotificationsData(data);
+      setNoti(data.notifications);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  useEffect(() => {
+    fetchNotification();
+  }, [currentPage]);
 
   return (
     <>
-      {noti.length > 0 && (
-        <>
-          <button
-            onClick={deleteAllNoti}
-            className="text-sm text-[#7f7f7f] self-end mr-5 mb-1 hover:text-gray47"
-          >
-            전체삭제
-          </button>
-          <ul className="w-full px-4 flex flex-col items-center">
-            {noti.map((data: Notification) => (
-              <NotificationItem key={data.id} data={data} onDelete={deleteNoti} />
-            ))}
-          </ul>
-          <Pagination currentPage={currentPage} totalPages={3} onPageChange={setCurrentPage} />
-        </>
+      {!noti ? (
+        <div className="mt-44 md:mt-36 text-center">
+          <Spinner />
+        </div>
+      ) : (
+        noti.length > 0 && (
+          <>
+            <button
+              onClick={deleteAllNoti}
+              className="text-sm text-[#7f7f7f] self-end mr-5 mb-1 hover:text-gray47"
+            >
+              전체삭제
+            </button>
+            <ul className="w-full mb-auto md:min-h-[290px] px-4 flex flex-col items-center">
+              {noti.map((data: Notification) => (
+                <NotificationItem key={data.id} data={data} onDelete={deleteNoti} />
+              ))}
+            </ul>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={notificationsData?.total_pages || 1}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )
       )}
-      {noti.length < 1 && (
+      {noti && noti.length < 1 && (
         <div className="text-[#7f7f7f] text-sm h-full flex flex-col items-center justify-center mt-40 md:mt-0">
           <div className="w-10 h-10 rounded-full border border-gray-200 flex justify-center items-center">
             <BellIcon />
