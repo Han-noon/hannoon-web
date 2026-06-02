@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { getEventsByTopic } from '@/api/event/geteventsbytopic';
-import type { ArticleItem } from '@/types/article';
+import { useState, useEffect, useRef } from 'react';
+import { getEventsByTopic } from '@/api/event/getEventsByTopic';
 import { Link, useParams } from 'react-router-dom';
 import type { EventResponse } from '@/types/timeline';
 
@@ -9,8 +8,8 @@ const TimelinePage = () => {
   const [isAscending, setIsAscending] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [eventsdata, setEventsdata] = useState<EventResponse | null>(null);
+  const articleRef = useRef<HTMLElement>(null);
 
-  //임시
   const { topic_id } = useParams();
 
   useEffect(() => {
@@ -133,7 +132,12 @@ const TimelinePage = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedId(item.id)}
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      if (window.innerWidth < 1024) {
+                        articleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
                     className={`text-left break-words w-full transition-colors mt-[3px] ${
                       isActive
                         ? 'font-bold text-black'
@@ -150,7 +154,7 @@ const TimelinePage = () => {
           </ul>
         </div>
 
-        <article className="w-full lg:w-[68%] flex flex-col lg:pr-12 min-w-0">
+        <article ref={articleRef} className="w-full lg:w-[68%] flex flex-col lg:pr-12 min-w-0">
           <img
             src={activeItem?.event_image_url ?? undefined}
             alt={activeItem?.title}
