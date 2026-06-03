@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAbusingArticlesByEvent } from '@/api/article/getAbusingArticlesByEvent';
+import { useParams } from 'react-router-dom';
 import type { AbusingArticleItem, AbusingType } from '@/api/article/getAbusingArticlesByEvent';
 
 const CATEGORIES: { id: AbusingType | 'all'; title: string; description?: string }[] = [
@@ -21,6 +22,7 @@ const EVENT_ID = 1; // 임시: event_id = 1
 const PAGE_SIZE = 4;
 
 export default function Abusing() {
+  const { id } = useParams();
   const [activeCategory, setActiveCategory] = useState<AbusingType | 'all'>('all');
   const [articles, setArticles] = useState<AbusingArticleItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -33,7 +35,7 @@ export default function Abusing() {
       setError(null);
       try {
         const data = await getAbusingArticlesByEvent({
-          eventId: EVENT_ID,
+          eventId: Number(id),
           abusingType: activeCategory === 'all' ? undefined : activeCategory,
           page: 1,
           size: PAGE_SIZE,
