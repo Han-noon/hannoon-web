@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
 import { THEME_CONFIG } from '@/components/Topic';
@@ -37,6 +37,7 @@ const AlertModal: React.FC<{
 };
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [bookmarkedIds, setBookmarkedIds] = useState<number[]>(() => {
     const saved = localStorage.getItem('scrappedNewsIds');
@@ -74,15 +75,12 @@ const HomePage: React.FC = () => {
       try {
         const categoryParam = selectedCategory === '전체' ? undefined : selectedCategory;
         const response: any = await getEvents(currentPage, 9, categoryParam);
-        console.log('받아온 API 데이터:', response);
+        //console.log('받아온 API 데이터:', response);
 
         if (response && response.events) {
-          const dataWithUniqueIds = response.events.map((item: any, index: number) => ({
-            ...item,
-            id: item.id || 1000 + currentPage * 100 + index,
-          }));
-          setBriefingData(dataWithUniqueIds);
+          setBriefingData(response.events);
           setTotalPages(response.total_pages || 1);
+          //console.log(dataWithUniqueIds);
         } else {
           setBriefingData([]);
           setTotalPages(1);
@@ -100,28 +98,32 @@ const HomePage: React.FC = () => {
     <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
         <section className="grid grid-cols-2 gap-x-4 mb-14">
-          <NewsCard
-            id={100}
-            themeId={1}
-            category={THEME_CONFIG[1]?.topic}
-            title={THEME_CONFIG[1]?.title}
-            summary={THEME_CONFIG[1]?.summary}
-            date="2026.10.10"
-            variant="long"
-            isBookmarked={bookmarkedIds.includes(100)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-          <NewsCard
-            id={101}
-            themeId={2}
-            category={THEME_CONFIG[2]?.topic}
-            title={THEME_CONFIG[2]?.title}
-            summary={THEME_CONFIG[2]?.summary}
-            date="2026.10.10"
-            variant="long"
-            isBookmarked={bookmarkedIds.includes(101)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
+          <div>
+            <NewsCard
+              id={100}
+              themeId={1}
+              category={THEME_CONFIG[1]?.topic}
+              title={THEME_CONFIG[1]?.title}
+              summary={THEME_CONFIG[1]?.summary}
+              date="2026.10.10"
+              variant="long"
+              isBookmarked={bookmarkedIds.includes(100)}
+              onBookmarkToggle={handleBookmarkToggle}
+            />
+          </div>
+          <div>
+            <NewsCard
+              id={101}
+              themeId={2}
+              category={THEME_CONFIG[2]?.topic}
+              title={THEME_CONFIG[2]?.title}
+              summary={THEME_CONFIG[2]?.summary}
+              date="2026.10.10"
+              variant="long"
+              isBookmarked={bookmarkedIds.includes(101)}
+              onBookmarkToggle={handleBookmarkToggle}
+            />
+          </div>
         </section>
 
         <section className="mb-8 flex items-start gap-4">
@@ -144,17 +146,19 @@ const HomePage: React.FC = () => {
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
             {briefingData.length > 0 ? (
               briefingData.map((news) => (
-                <NewsCard
-                  key={news.id}
-                  id={news.id}
-                  themeId={news.eventId}
-                  category={news.category || '미분류'}
-                  title={news.title || '제목 없음'}
-                  summary={news.summary || ''}
-                  date={news.date}
-                  isBookmarked={bookmarkedIds.includes(news.id)}
-                  onBookmarkToggle={handleBookmarkToggle}
-                />
+                <div onClick={() => navigate(`/event-detail/${news.event_id}`)}>
+                  <NewsCard
+                    key={news.event_id}
+                    id={news.event_id}
+                    themeId={news.topic_id}
+                    category={news.category || '미분류'}
+                    title={news.title || '제목 없음'}
+                    summary={news.summary || ''}
+                    date={news.created_at.slice(0, 10).replaceAll('-', '.')}
+                    isBookmarked={bookmarkedIds.includes(news.event_id)}
+                    onBookmarkToggle={handleBookmarkToggle}
+                  />
+                </div>
               ))
             ) : (
               <div className="col-span-full py-16 text-center text-gray-400 text-[14px]">
