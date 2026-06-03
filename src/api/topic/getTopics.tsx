@@ -1,11 +1,15 @@
 import { supabase } from '@/lib/supabase';
 import type { Topics } from '@/types/timelineList';
 
-export const getTopics = async (p_page: number): Promise<Topics> => {
+export const getTopics = async (
+  p_category: string | null,
+  p_page: number,
+  p_search: string | null
+): Promise<Topics> => {
   const { data, error } = await supabase.rpc('get_topics', {
-    p_category: null,
+    p_category,
     p_page,
-    p_search: null,
+    p_search,
     p_size: 9,
   });
 

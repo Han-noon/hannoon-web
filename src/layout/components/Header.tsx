@@ -9,10 +9,11 @@ import useClickOutside from '@/hooks/useClickOutside';
 import useSession from '@/hooks/useSession';
 import { signOut } from '@/api/auth/signOut';
 import type { Menu } from '@/types/header';
+import { useSearchStore } from '@/store/useSearchStore';
 
 const Header = () => {
   const navigate = useNavigate();
-  const [keyword, setKeyword] = useState('');
+  const { keyword, setKeyword, search, setSearch } = useSearchStore();
   const searchId = useId();
   const [isMenuOpen, setIsMenuOpen] = useState(false); // 모바일용 햄버거바
 
@@ -41,10 +42,6 @@ const Header = () => {
       },
     },
     {
-      label: '소개',
-      onClick: () => navigate('/'),
-    },
-    {
       label: session ? '로그아웃' : '로그인',
       onClick: session ? handleSignOut : () => navigate('/signIn'),
     },
@@ -71,6 +68,8 @@ const Header = () => {
   const NotiBoxRef = useRef<HTMLDivElement | null>(null);
   useClickOutside(NotiBoxRef, close);
 
+  const currentPath = location.pathname;
+
   return (
     <header
       className="w-full h-[185px] md:h-[230px] bg-cover bg-[50%_50%]"
@@ -80,7 +79,15 @@ const Header = () => {
     >
       {/* 로고 & 사용자 관련 네비 */}
       <div className="w-full h-16 flex justify-between items-center px-5 md:px-16">
-        <h1 className="text-[#f6f6f6] text-2xl md:text-3xl font-[EbsHunmin]">한 눈</h1>
+        <h1
+          onClick={() => {
+            setKeyword('');
+            navigate('/');
+          }}
+          className="text-[#f6f6f6] text-2xl md:text-3xl font-[EbsHunmin]"
+        >
+          한 눈
+        </h1>
         <nav aria-label="주요 메뉴" className="flex justify-between items-center md:w-60">
           {/* 알림 */}
           <div ref={NotiBoxRef} className="relative">
@@ -128,6 +135,9 @@ const Header = () => {
       <div className="flex justify-center">
         <form
           onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+            setSearch(!search);
+            const nav = currentPath === '/' || currentPath === '/timeline' ? false : true;
+            if (nav) navigate('/');
             event.preventDefault();
           }}
           role="search"

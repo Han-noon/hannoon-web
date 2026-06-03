@@ -3,21 +3,35 @@ import { subscribeTopic } from '@/api/topic/subscribeTopic';
 import { unsubscribeTopic } from '@/api/topic/unsubscribeTopic';
 import Pagination from '@/components/Pagination';
 import ThemeCard from '@/components/ThemeCard';
+import { useSearchStore } from '@/store/useSearchStore';
 import type { Topics } from '@/types/timelineList';
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+
 
 const TimelineListPage = () => {
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [topicsData, setTopicsData] = useState<Topics | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { search, keyword } = useSearchStore();
+  const currentCategory = searchParams.get('category');
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentCategory]);
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const data = await getTopics(currentPage);
+        const data = await getTopics(
+          currentCategory === '전체' ? null : currentCategory,
+          currentPage,
+          keyword === '' ? null : keyword
+        );
         setTopicsData(data);
 
         // 응답의 is_subscribed로 초기 북마크 상태 세팅
@@ -31,10 +45,12 @@ const TimelineListPage = () => {
     };
 
     fetchEvent();
-  }, [currentPage, location.key]);
+
+  }, [currentPage, currentCategory, search, location.key]);
 
   const handleBookmarkToggle = async (id: number) => {
     const isCurrentlyBookmarked = bookmarkedIds.has(id);
+
 
     // 낙관적 업데이트 (UI 먼저 반영)
     setBookmarkedIds((prev) => {

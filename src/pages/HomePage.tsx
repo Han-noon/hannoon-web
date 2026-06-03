@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
-import { THEME_CONFIG } from '@/components/Topic';
+//import { THEME_CONFIG } from '@/components/Topic';
 import { getEvents } from '@/api/event/getEvents';
 import type { EventItem } from '@/types/eventCard';
+import { useSearchStore } from '@/store/useSearchStore';
 
 const AlertModal: React.FC<{
   isOpen: boolean;
@@ -69,12 +70,14 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const { keyword, search } = useSearchStore();
+
   useEffect(() => {
     const fetchBriefings = async () => {
       setIsLoading(true);
       try {
         const categoryParam = selectedCategory === '전체' ? undefined : selectedCategory;
-        const response: any = await getEvents(currentPage, 9, categoryParam);
+        const response: any = await getEvents(currentPage, 9, keyword, categoryParam);
         //console.log('받아온 API 데이터:', response);
 
         if (response && response.events) {
@@ -92,12 +95,12 @@ const HomePage: React.FC = () => {
       }
     };
     fetchBriefings();
-  }, [currentPage, selectedCategory]);
+  }, [currentPage, selectedCategory, search]);
 
   return (
     <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
-        <section className="grid grid-cols-2 gap-x-4 mb-14">
+        {/* <section className="grid grid-cols-2 gap-x-4 mb-14">
           <div>
             <NewsCard
               id={100}
@@ -124,7 +127,7 @@ const HomePage: React.FC = () => {
               onBookmarkToggle={handleBookmarkToggle}
             />
           </div>
-        </section>
+        </section> */}
 
         <section className="mb-8 flex items-start gap-4">
           <h2 className="text-[24px] font-bold text-black tracking-tight leading-none shrink-0">
