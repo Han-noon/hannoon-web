@@ -24,12 +24,14 @@ const Category = () => {
         className="relative px-4 md:px-8 h-full min-w-[177px] flex items-center border-r border-gray-200 cursor-pointer hover:bg-gray-50"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <div className="flex items-center gap-1 md:gap-4">
-          <span className="text-[#474747] ml-1">{currentMenuLabel}</span>
-          <DropdownIcon isOpen={isOpen} />
+        <div className={`flex gap-1 md:gap-4 md:min-w-[180px] justify-between`}>
+          <p className="text-[#474747]">{currentMenuLabel}</p>
+          <div>
+            <DropdownIcon isOpen={isOpen} />
+          </div>
         </div>
         {isOpen && (
-          <div className="absolute top-[45px] left-0 w-full bg-white border border-gray-200 shadow-lg flex flex-col z-40">
+          <div className="md:min-w-[180px] absolute top-[45px] left-0 w-full bg-white border border-gray-200 shadow-lg flex flex-col z-40">
             {dropMenus.map((item, idx) => (
               <Link
                 key={idx}
