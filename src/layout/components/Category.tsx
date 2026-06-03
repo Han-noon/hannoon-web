@@ -11,7 +11,7 @@ const Category = () => {
   const dropMenus = [
     { label: '사건 리스트', to: '/' },
     { label: '사건 브리핑', to: '/event-detail/1' },
-    { label: '타임라인으로 보는 사건', to: '/timeline/1' },
+    { label: '타임라인으로 보는 사건', to: '/timeline' },
     { label: '어뷰징 리스트', to: '/abusing/1' },
   ];
 

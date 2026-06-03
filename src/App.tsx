@@ -11,6 +11,7 @@ import OneSignal from 'react-onesignal';
 import { useEffect } from 'react';
 import NotificationPage from '@/pages/NotificationPage';
 import useOrientationSync from '@/hooks/useOrientationSync';
+import TimelineListPage from '@/pages/TimelineListPage';
 
 function App() {
   useOrientationSync();
@@ -43,6 +44,7 @@ function App() {
 
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/timeline" element={<TimelineListPage />} />
         <Route path="/mypage" element={<MyPage />}></Route>
         <Route path="/event-detail/:id" element={<EventSummaryPage />}></Route>
         <Route path="/timeline/:topic_id" element={<TimelinePage />}></Route>
