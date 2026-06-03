@@ -5,7 +5,6 @@ import Modal from './Modal';
 import { getProfile } from '@/api/profile/getProfile';
 import { updateProfileImage } from '@/api/profile/updateProfileImage';
 import { getSubscriptions } from '@/api/topic/getSubscriptions';
-import { subscribeTopic } from '@/api/topic/subscribeTopic';
 import { unsubscribeTopic } from '@/api/topic/unsubscribeTopic';
 import type { SubscribedTopic } from '@/api/topic/getSubscriptions';
 import NewsCard from '@/components/NewsCard';
