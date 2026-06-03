@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getEventsByTopic } from '@/api/event/getEventsByTopic';
+import { getTopicById } from '@/api/topic/getTopicById';
+import type { TopicResponse } from '@/api/topic/getTopicById';
 import { Link, useParams } from 'react-router-dom';
 import type { EventResponse } from '@/types/timeline';
 
@@ -8,9 +10,23 @@ const TimelinePage = () => {
   const [isAscending, setIsAscending] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [eventsdata, setEventsdata] = useState<EventResponse | null>(null);
+  const [topicData, setTopicData] = useState<TopicResponse | null>(null);
   const articleRef = useRef<HTMLElement>(null);
 
   const { topic_id } = useParams();
+
+  useEffect(() => {
+    const fetchTopic = async () => {
+      try {
+        const data = await getTopicById(Number(topic_id) || 1);
+        setTopicData(data);
+      } catch (error) {
+        console.error('토픽 조회 실패:', error);
+      }
+    };
+
+    fetchTopic();
+  }, [topic_id]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -58,7 +74,9 @@ const TimelinePage = () => {
             <p className="text-base md:text-lg font-medium tracking-wider text-[#333]">TIMELINE</p>
           </div>
           <div className="text-center">
-            <p className="text-base md:text-lg font-medium text-[#333]">정치</p>
+            <p className="text-base md:text-lg font-medium text-[#333]">
+              {topicData?.category ?? ''}
+            </p>
           </div>
           <div className="text-right">
             <button
@@ -75,7 +93,7 @@ const TimelinePage = () => {
       </div>
 
       <h1 className="text-center text-[28px] md:text-[32px] font-bold mt-10 md:mt-12 mb-8 md:mb-10 tracking-tight">
-        12·3 비상계엄 사태
+        {topicData?.title ?? ''}
       </h1>
 
       <div className="px-6 md:px-12 mb-5">
