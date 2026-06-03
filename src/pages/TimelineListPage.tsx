@@ -1,19 +1,32 @@
 import { getTopics } from '@/api/topic/getTopics';
 import Pagination from '@/components/Pagination';
 import ThemeCard from '@/components/ThemeCard';
+import { useSearchStore } from '@/store/useSearchStore';
 import type { Topics } from '@/types/timelineList';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const TimelineListPage = () => {
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [topicsData, setTopicsData] = useState<Topics | null>(null);
   const navigate = useNavigate();
 
+  const { search, keyword } = useSearchStore();
+  const currentCategory = searchParams.get('category');
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentCategory]);
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const data = await getTopics(currentPage);
+        const data = await getTopics(
+          currentCategory === '전체' ? null : currentCategory,
+          currentPage,
+          keyword === '' ? null : keyword
+        );
         setTopicsData(data);
       } catch (error) {
         console.error(error);
@@ -21,7 +34,7 @@ const TimelineListPage = () => {
     };
 
     fetchEvent();
-  }, [currentPage]);
+  }, [currentPage, currentCategory, search]);
 
   const handleBookmarkToggle = (id: number) => {
     // TODO: API 요청을 보내거나, 로컬 state를 변경하는 로직

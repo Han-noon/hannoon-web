@@ -1,28 +1,31 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
 const Category = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation(); // 현재 URL 경로를 가져옴
 
   const currentCategory = searchParams.get('category') || '전체';
 
-  const categories = ['전체', '정치', '경제', '사회'];
+  const categories = ['전체', '정치', '경제', '사회', '국제'];
   const dropMenus = [
     { label: '사건 리스트', to: '/' },
-    { label: '사건 브리핑', to: '/event-detail/1' },
     { label: '타임라인으로 보는 사건', to: '/timeline' },
-    { label: '어뷰징 리스트', to: '/abusing/1' },
   ];
 
+  const currentMenuLabel = location.pathname.startsWith('/timeline')
+    ? '타임라인으로 보는 사건'
+    : '사건 리스트';
+
   return (
-    <div className="w-full  h-9 md:h-11 bg-white border-b border-gray-200 flex items-center shadow-[0px_1px_2px_0px_#e0dfdf] text-xs md:text-sm">
+    <div className="w-full h-9 md:h-11 bg-white border-b border-gray-200 flex items-center shadow-[0px_1px_2px_0px_#e0dfdf] text-xs md:text-sm">
       <div
         className="relative px-4 md:px-8 h-full min-w-[177px] flex items-center border-r border-gray-200 cursor-pointer hover:bg-gray-50"
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <div className="flex items-center gap-1 md:gap-4">
-          <span className="text-[#474747] ml-1">타임라인으로 보는 사건</span>
+          <span className="text-[#474747] ml-1">{currentMenuLabel}</span>
           <DropdownIcon isOpen={isOpen} />
         </div>
         {isOpen && (
