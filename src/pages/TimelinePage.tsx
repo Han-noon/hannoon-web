@@ -74,7 +74,6 @@ const TimelinePage = () => {
             <p className="text-base md:text-lg font-medium tracking-wider text-[#333]">TIMELINE</p>
           </div>
           <div className="text-center">
-            {/* 하드코딩 → API 데이터로 교체 */}
             <p className="text-base md:text-lg font-medium text-[#333]">
               {topicData?.category ?? ''}
             </p>
@@ -93,7 +92,6 @@ const TimelinePage = () => {
         <div className="border-b-[1px] border-[#222] mt-[3px]"></div>
       </div>
 
-      {/* 하드코딩 → API 데이터로 교체 */}
       <h1 className="text-center text-[28px] md:text-[32px] font-bold mt-10 md:mt-12 mb-8 md:mb-10 tracking-tight">
         {topicData?.title ?? ''}
       </h1>

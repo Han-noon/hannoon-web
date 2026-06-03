@@ -1,20 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import NewsCard from '@/components/NewsCard';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
-import { THEME_CONFIG } from '@/components/Topic';
 import Modal from './Modal';
 import { getProfile } from '@/api/profile/getProfile';
 import { updateProfileImage } from '@/api/profile/updateProfileImage';
+import { getSubscriptions } from '@/api/topic/getSubscriptions';
+import { subscribeTopic } from '@/api/topic/subscribeTopic';
+import { unsubscribeTopic } from '@/api/topic/unsubscribeTopic';
+import type { SubscribedTopic } from '@/api/topic/getSubscriptions';
+import NewsCard from '@/components/NewsCard';
 
 const ITEMS_PER_PAGE = 6;
-
-const getThemeIdByNewsId = (newsId: number) => {
-  if (newsId === 100) return 1;
-  if (newsId === 101) return 2;
-  if (newsId >= 200) return ((newsId - 200) % 15) + 1;
-  return 1;
-};
 
 interface UserData {
   nickname: string;
@@ -24,44 +20,47 @@ interface UserData {
 
 const MyPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'scrapped' | 'recent'>('scrapped');
-  const [scrappedNewsIds, setScrappedNewsIds] = useState<number[]>([]);
-  const [recentNews, setRecentNews] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 프로필
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isFetchError, setIsFetchError] = useState<boolean>(false);
 
+  // 스크랩한 토픽 (API)
+  const [scrappedTopics, setScrappedTopics] = useState<SubscribedTopic[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isTopicsLoading, setIsTopicsLoading] = useState(false);
+
+  // 최근 본 사건 (localStorage)
+  const [recentNews, setRecentNews] = useState<any[]>([]);
+
+  // 모달
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const gridRef = useRef<HTMLDivElement>(null);
-
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
     message: string;
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-  });
+  }>({ isOpen: false, title: '', message: '' });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
+  // 페이지 변경 시 스크롤
   useEffect(() => {
     if (gridRef.current) {
       const yOffset = -80;
-      const element = gridRef.current;
-      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+      const y = gridRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, [currentPage]);
 
+  // 프로필 로드 (최초 1회)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProfile = async () => {
       setIsLoading(true);
-
       try {
         const profileData = await getProfile();
         setUserData({
@@ -73,32 +72,67 @@ const MyPage: React.FC = () => {
       } catch (error) {
         console.error('프로필 정보를 불러오지 못했습니다:', error);
         setIsFetchError(true);
-      }
-
-      try {
-        const savedScraps = JSON.parse(localStorage.getItem('scrappedNewsIds') || '[]');
-        const savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
-        const cleanHistory = Array.isArray(savedHistory)
-          ? savedHistory.filter((item: any) => item && item.themeId !== undefined)
-          : [];
-
-        setScrappedNewsIds(Array.isArray(savedScraps) ? savedScraps : []);
-        setRecentNews(cleanHistory);
-        setCurrentPage(1);
-      } catch (e) {
-        console.error('Localstorage data corrupted:', e);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchProfile();
+  }, []);
+
+  // 스크랩 탭: 페이지 변경 시마다 API 호출
+  useEffect(() => {
+    if (activeTab !== 'scrapped') return;
+
+    const fetchSubscriptions = async () => {
+      setIsTopicsLoading(true);
+      try {
+        const data = await getSubscriptions(currentPage, ITEMS_PER_PAGE);
+        setScrappedTopics(data.topics);
+        setTotalCount(data.total_count);
+        setTotalPages(data.total_pages);
+      } catch (error) {
+        console.error('스크랩 목록을 불러오지 못했습니다:', error);
+      } finally {
+        setIsTopicsLoading(false);
+      }
+    };
+
+    fetchSubscriptions();
+  }, [activeTab, currentPage]);
+
+  // 최근 본 사건 탭: localStorage에서 로드
+  useEffect(() => {
+    if (activeTab !== 'recent') return;
+
+    try {
+      const savedHistory = JSON.parse(localStorage.getItem('recentViewedNews') || '[]');
+      const cleanHistory = Array.isArray(savedHistory)
+        ? savedHistory.filter((item: any) => item && item.themeId !== undefined)
+        : [];
+      setRecentNews(cleanHistory);
+    } catch (e) {
+      console.error('Localstorage data corrupted:', e);
+    }
   }, [activeTab]);
 
-  const scrappedThemeIds = Array.from(new Set(scrappedNewsIds.map((id) => getThemeIdByNewsId(id))));
-  const currentTotalItems = activeTab === 'scrapped' ? scrappedThemeIds.length : recentNews.length;
-  const totalPages = Math.max(1, Math.ceil(currentTotalItems / ITEMS_PER_PAGE));
+  // 북마크 해제
+  const handleBookmarkToggle = async (topicId: number) => {
+    try {
+      await unsubscribeTopic(topicId);
+      setScrappedTopics((prev) => prev.filter((t) => t.id !== topicId));
+      setTotalCount((prev) => prev - 1);
 
+      // 현재 페이지에 항목이 없어지면 이전 페이지로
+      if (scrappedTopics.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+    } catch (error) {
+      console.error('스크랩 해제 실패:', error);
+    }
+  };
+
+  // 이미지 변경
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,7 +140,7 @@ const MyPage: React.FC = () => {
     setIsLoading(true);
     try {
       const newUrl = await updateProfileImage(file);
-      setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: newUrl } : null));
+      setUserData((prev) => (prev ? { ...prev, profileImage: newUrl } : null));
     } catch (error) {
       console.error('이미지 변경 통신 에러:', error);
       setErrorModal({
@@ -120,11 +154,12 @@ const MyPage: React.FC = () => {
     }
   };
 
+  // 이미지 삭제
   const handleDeleteImage = async () => {
     setIsLoading(true);
     try {
       await updateProfileImage(null);
-      setUserData((prev: UserData | null) => (prev ? { ...prev, profileImage: null } : null));
+      setUserData((prev) => (prev ? { ...prev, profileImage: null } : null));
     } catch (error) {
       console.error('이미지 삭제 통신 에러:', error);
       setErrorModal({
@@ -138,25 +173,21 @@ const MyPage: React.FC = () => {
     }
   };
 
+  // 회원 탈퇴
   const handleWithdraw = () => {
     setIsWithdrawModalOpen(false);
-    const isDbSuccess = window.navigator.onLine;
-
-    if (!isDbSuccess) {
-      setErrorModal({
-        isOpen: true,
-        title: '회원 탈퇴 실패',
-        message:
-          '처리 오류로 인해 탈퇴 처리가 완료되지 않았습니다. 잠시 후 서버가 안정되면 다시 시도해 주세요.',
-      });
-      return;
-    }
-
     localStorage.clear();
     alert('탈퇴되었습니다.');
     window.location.href = '/';
   };
 
+  // 탭 전환
+  const handleTabChange = (tab: 'scrapped' | 'recent') => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  // 로딩 (프로필 최초 로드)
   if (isLoading && !userData) {
     return (
       <div className="w-full min-h-[60vh] flex items-center justify-center">
@@ -165,6 +196,7 @@ const MyPage: React.FC = () => {
     );
   }
 
+  // 프로필 에러
   if (isFetchError || !userData) {
     return (
       <div className="w-full min-h-[60vh] flex flex-col items-center justify-center px-6">
@@ -202,12 +234,18 @@ const MyPage: React.FC = () => {
     );
   }
 
+  // 탭 컨텐츠
   const renderTabContent = () => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-
     if (activeTab === 'scrapped') {
-      if (scrappedThemeIds.length === 0) {
+      if (isTopicsLoading) {
+        return (
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+          </div>
+        );
+      }
+
+      if (scrappedTopics.length === 0) {
         return (
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-16 text-center w-full">
             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3.5 border border-gray-100">
@@ -229,45 +267,25 @@ const MyPage: React.FC = () => {
         );
       }
 
-      const paginatedScrapped = scrappedThemeIds.slice(startIndex, endIndex);
-
-      return paginatedScrapped.map((id) => {
-        const theme = THEME_CONFIG && THEME_CONFIG[id];
-        if (!theme) return null;
-        return (
-          <ThemeCard
-            key={id}
-            id={id}
-            category={theme.category || '미분류'}
-            title={theme.topic || '제목 없음'}
-            summary={theme.summary || ''}
-            firstReportDate={theme.firstDate || ''}
-            latestReportDate={theme.latestDate || ''}
-            isBookmarked={true}
-            onBookmarkToggle={(themeId) => {
-              setScrappedNewsIds((prev) => {
-                const nextScraps = prev.filter((newsId) => getThemeIdByNewsId(newsId) !== themeId);
-                localStorage.setItem('scrappedNewsIds', JSON.stringify(nextScraps));
-
-                const remainingItems = Array.from(
-                  new Set(nextScraps.map((nid) => getThemeIdByNewsId(nid)))
-                ).length;
-                if (
-                  remainingItems > 0 &&
-                  currentPage > Math.ceil(remainingItems / ITEMS_PER_PAGE)
-                ) {
-                  setCurrentPage(Math.ceil(remainingItems / ITEMS_PER_PAGE));
-                }
-
-                return nextScraps;
-              });
-            }}
-          />
-        );
-      });
+      return scrappedTopics.map((topic) => (
+        <ThemeCard
+          key={topic.id}
+          id={topic.id}
+          category={topic.category || '미분류'}
+          title={topic.title || '제목 없음'}
+          summary={topic.summary || ''}
+          firstReportDate={topic.created_at.slice(0, 10).replaceAll('-', '.')}
+          latestReportDate={topic.updated_at.slice(0, 10).replaceAll('-', '.')}
+          isBookmarked={true}
+          onBookmarkToggle={handleBookmarkToggle}
+        />
+      ));
     }
 
     if (activeTab === 'recent') {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedRecent = recentNews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
       if (recentNews.length === 0) {
         return (
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-16 text-center w-full">
@@ -291,33 +309,34 @@ const MyPage: React.FC = () => {
         );
       }
 
-      const paginatedRecent = recentNews.slice(startIndex, endIndex);
-
       return paginatedRecent.map((news) => {
         if (!news) return null;
-        const targetTheme = THEME_CONFIG && news.themeId ? THEME_CONFIG[news.themeId] : null;
         return (
           <NewsCard
             key={news.id}
-            {...news}
-            category={targetTheme ? targetTheme.topic : '미분류'}
-            isBookmarked={scrappedNewsIds.includes(news.id)}
-            onBookmarkToggle={(id) => {
-              const updated = scrappedNewsIds.includes(id)
-                ? scrappedNewsIds.filter((i) => i !== id)
-                : [...scrappedNewsIds, id];
-              setScrappedNewsIds(updated);
-              localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
-            }}
+            id={news.id}
+            themeId={news.themeId}
+            category={news.category || '미분류'}
+            title={news.title || '제목 없음'}
+            summary={news.summary || ''}
+            date={news.date || ''}
+            isBookmarked={false}
+            onBookmarkToggle={() => {}}
           />
         );
       });
     }
+
     return null;
   };
 
+  const recentTotalPages = Math.max(1, Math.ceil(recentNews.length / ITEMS_PER_PAGE));
+  const currentTotalPages = activeTab === 'scrapped' ? totalPages : recentTotalPages;
+  const currentTotalItems = activeTab === 'scrapped' ? totalCount : recentNews.length;
+
   return (
     <div className="w-full pb-20">
+      {/* 이미지 변경 중 로딩 오버레이 */}
       {isLoading && userData && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-white/50 backdrop-blur-sm">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
@@ -325,6 +344,7 @@ const MyPage: React.FC = () => {
       )}
 
       <div className="max-w-[880px] mx-auto px-6 pt-10">
+        {/* 프로필 섹션 */}
         <section className="flex flex-col md:flex-row md:items-end justify-between pb-8 mb-10">
           <div className="flex items-center space-x-8">
             <div className="relative">
@@ -400,32 +420,25 @@ const MyPage: React.FC = () => {
               <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">
                 스크랩한 토픽
               </p>
-              <p className="text-[34px] font-bold text-black leading-none">
-                {scrappedNewsIds.length}
-              </p>
+              <p className="text-[34px] font-bold text-black leading-none">{totalCount}</p>
             </div>
           </div>
         </section>
 
+        {/* 탭 */}
         <div
           ref={gridRef}
           className="flex items-end justify-between mb-10 border-b border-gray-300"
         >
           <div className="flex space-x-8">
             <button
-              onClick={() => {
-                setActiveTab('scrapped');
-                setCurrentPage(1);
-              }}
+              onClick={() => handleTabChange('scrapped')}
               className={`text-[14px] pb-1 transition-all ${activeTab === 'scrapped' ? 'font-bold text-black border-b-2 border-black' : 'text-gray-300 font-normal hover:text-gray-500'}`}
             >
               스크랩한 토픽
             </button>
             <button
-              onClick={() => {
-                setActiveTab('recent');
-                setCurrentPage(1);
-              }}
+              onClick={() => handleTabChange('recent')}
               className={`text-[14px] pb-1 transition-all ${activeTab === 'recent' ? 'font-bold text-black border-b-2 border-black' : 'text-gray-300 font-normal hover:text-gray-500'}`}
             >
               최근 본 사건
@@ -453,18 +466,21 @@ const MyPage: React.FC = () => {
           </button>
         </div>
 
+        {/* 그리드 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 min-h-[300px] items-start">
           {renderTabContent()}
         </div>
 
+        {/* 페이지네이션 */}
         {currentTotalItems > 0 && (
           <Pagination
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={currentTotalPages}
             onPageChange={setCurrentPage}
           />
         )}
 
+        {/* 모달들 */}
         <Modal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
@@ -473,7 +489,6 @@ const MyPage: React.FC = () => {
           message={'현재 설정된 이미지를 삭제하시겠습니까?\n삭제 후에는 기본 프로필로 변경됩니다.'}
           confirmText="삭제하기"
         />
-
         <Modal
           isOpen={isWithdrawModalOpen}
           onClose={() => setIsWithdrawModalOpen(false)}
@@ -484,7 +499,6 @@ const MyPage: React.FC = () => {
           }
           confirmText="탈퇴하기"
         />
-
         <Modal
           isOpen={errorModal.isOpen}
           onClose={() => setErrorModal((prev) => ({ ...prev, isOpen: false }))}
