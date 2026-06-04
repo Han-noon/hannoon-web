@@ -149,7 +149,6 @@ const MyPage: React.FC = () => {
       setTotalCount((prev) => prev - 1);
 
       if (scrappedTopics.length === 1 && currentPage > 1) {
-        // 페이지 감소 시 URL 업데이트
         handlePageChange(currentPage - 1);
       }
     } catch (error) {
@@ -227,7 +226,7 @@ const MyPage: React.FC = () => {
     }
   };
 
-  // 탭 전환: 탭 바꾸면 페이지 번호를 1로 초기화하여 URL에 기록
+  // 탭 전환
   const handleTabChange = (tab: 'scrapped' | 'recent') => {
     setSearchParams({ tab, page: '1' });
   };
@@ -314,7 +313,7 @@ const MyPage: React.FC = () => {
           key={topic.id}
           id={topic.id}
           category={topic.category || '미분류'}
-          title={topic.title || '제목 없음'}
+          title={(topic as any).topic_title || topic.title || '제목 없음'}
           summary={topic.summary || ''}
           firstReportDate={
             topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
@@ -365,10 +364,11 @@ const MyPage: React.FC = () => {
 
         const newsId = news.event_id || news.id;
         const topicId = news.topic_id || news.themeId || 1;
-        const title =
-          news.topic_title || news.title || news.event_title || news.events?.title || '제목 없음';
-        const category = news.category || news.event_category || news.events?.category || '미분류';
-        const summary = news.summary || news.event_summary || news.events?.summary || '';
+
+        const title = news.event_title || news.title || '제목 없음';
+
+        const category = news.category || news.event_category || '미분류';
+        const summary = news.summary || news.event_summary || '';
         const dateStr = news.created_at || news.date || '';
 
         return (
@@ -531,7 +531,7 @@ const MyPage: React.FC = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={currentTotalPages}
-            onPageChange={handlePageChange} // 페이지 변경 시 URL도 변경
+            onPageChange={handlePageChange}
           />
         )}
 
