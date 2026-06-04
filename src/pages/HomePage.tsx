@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
-//import { THEME_CONFIG } from '@/components/Topic';
 import { getEvents } from '@/api/event/getEvents';
 import type { EventItem } from '@/types/eventCard';
 import { useSearchStore } from '@/store/useSearchStore';
@@ -46,6 +45,7 @@ const HomePage: React.FC = () => {
   });
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
+  // 💡 상단 카드 로직 주석 처리에 따라 브리핑 데이터 상태만 사용
   const [briefingData, setBriefingData] = useState<EventItem[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -77,13 +77,13 @@ const HomePage: React.FC = () => {
       setIsLoading(true);
       try {
         const categoryParam = selectedCategory === '전체' ? undefined : selectedCategory;
+
+        // 💡 상단 긴 카드를 제외했으므로, 1페이지 여부와 상관없이 무조건 9개씩 가져오도록 원복
         const response: any = await getEvents(currentPage, 9, keyword, categoryParam);
-        //console.log('받아온 API 데이터:', response);
 
         if (response && response.events) {
           setBriefingData(response.events);
           setTotalPages(response.total_pages || 1);
-          //console.log(dataWithUniqueIds);
         } else {
           setBriefingData([]);
           setTotalPages(1);
@@ -100,31 +100,36 @@ const HomePage: React.FC = () => {
   return (
     <div className="w-full pb-20">
       <div className="max-w-[880px] mx-auto px-6 pt-10">
+        {/* 
+          💡 [다음 학기 고도화 예정] 상단 주요 카드 2개 영역
+          - 추후 스크랩순, 관리자 지정 등의 기준으로 2개를 동적으로 띄울 예정 
+          - 하단 이슈 브리핑과 별도로 API에서 데이터를 분리하여 매핑할 것
+        */}
         {/* <section className="grid grid-cols-2 gap-x-4 mb-14">
           <div>
             <NewsCard
               id={100}
               themeId={1}
-              category={THEME_CONFIG[1]?.topic}
-              title={THEME_CONFIG[1]?.title}
-              summary={THEME_CONFIG[1]?.summary}
+              category="정치"
+              title="상단 고정 카드 1 (예시)"
+              summary="다음 학기에 추가될 동적 상단 카드 내용입니다."
               date="2026.10.10"
               variant="long"
-              isBookmarked={bookmarkedIds.includes(100)}
-              onBookmarkToggle={handleBookmarkToggle}
+              isBookmarked={false}
+              onBookmarkToggle={() => {}}
             />
           </div>
           <div>
             <NewsCard
               id={101}
               themeId={2}
-              category={THEME_CONFIG[2]?.topic}
-              title={THEME_CONFIG[2]?.title}
-              summary={THEME_CONFIG[2]?.summary}
+              category="경제"
+              title="상단 고정 카드 2 (예시)"
+              summary="다음 학기에 추가될 동적 상단 카드 내용입니다."
               date="2026.10.10"
               variant="long"
-              isBookmarked={bookmarkedIds.includes(101)}
-              onBookmarkToggle={handleBookmarkToggle}
+              isBookmarked={false}
+              onBookmarkToggle={() => {}}
             />
           </div>
         </section> */}
@@ -149,15 +154,14 @@ const HomePage: React.FC = () => {
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
             {briefingData.length > 0 ? (
               briefingData.map((news) => (
-                <div onClick={() => navigate(`/event-detail/${news.event_id}`)}>
+                <div key={news.event_id} onClick={() => navigate(`/event-detail/${news.event_id}`)}>
                   <NewsCard
-                    key={news.event_id}
                     id={news.event_id}
                     themeId={news.topic_id}
                     category={news.category || '미분류'}
                     title={news.title || '제목 없음'}
                     summary={news.summary || ''}
-                    date={news.created_at.slice(0, 10).replaceAll('-', '.')}
+                    date={news.created_at ? news.created_at.slice(0, 10).replaceAll('-', '.') : ''}
                     isBookmarked={bookmarkedIds.includes(news.event_id)}
                     onBookmarkToggle={handleBookmarkToggle}
                   />
