@@ -44,11 +44,11 @@ const MyPage: React.FC = () => {
   const [recentTotalPages, setRecentTotalPages] = useState(1);
   const [isRecentLoading, setIsRecentLoading] = useState(false);
 
-  // 뉴스 카드 스크랩용 로컬 스토리지
-  const [scrappedNewsIds, setScrappedNewsIds] = useState<number[]>(() => {
-    const saved = localStorage.getItem('scrappedNewsIds');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // // 뉴스 카드 스크랩용 로컬 스토리지
+  // const [scrappedNewsIds, setScrappedNewsIds] = useState<number[]>(() => {
+  //   const saved = localStorage.getItem('scrappedNewsIds');
+  //   return saved ? JSON.parse(saved) : [];
+  // });
 
   // 모달
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -157,13 +157,22 @@ const MyPage: React.FC = () => {
   };
 
   // 최근 본 사건 뉴스 카드 북마크 토글
-  const handleEventBookmarkToggle = (newsId: number) => {
-    setScrappedNewsIds((prev) => {
-      const isCurrentlyScrapped = prev.includes(newsId);
-      const updated = isCurrentlyScrapped ? prev.filter((id) => id !== newsId) : [...prev, newsId];
-      localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
-      return updated;
-    });
+  // const handleEventBookmarkToggle = (newsId: number) => {
+  //   setScrappedNewsIds((prev) => {
+  //     const isCurrentlyScrapped = prev.includes(newsId);
+  //     const updated = isCurrentlyScrapped ? prev.filter((id) => id !== newsId) : [...prev, newsId];
+  //     localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+  //     return updated;
+  //   });
+  // };
+  const handleSubscribeToggle = (targetThemeId: number, nextState: boolean) => {
+    setRecentEvents((prevData) =>
+      prevData.map((news) =>
+        news.topic_id === targetThemeId
+          ? { ...news, is_subscribed: nextState } // 토픽 ID가 같으면 스크랩 여부 변경
+          : news
+      )
+    );
   };
 
   // 이미지 변경
@@ -362,26 +371,28 @@ const MyPage: React.FC = () => {
       return recentEvents.map((news) => {
         if (!news) return null;
 
-        const newsId = news.event_id || news.id;
-        const topicId = news.topic_id || news.themeId || 1;
+        // const newsId = news.event_id || news.id;
+        // const topicId = news.topic_id || news.themeId || 1;
 
-        const title = news.event_title || news.title || '제목 없음';
+        // const title = news.event_title || news.title || '제목 없음';
 
-        const category = news.category || news.event_category || '미분류';
-        const summary = news.summary || news.event_summary || '';
-        const dateStr = news.created_at || news.date || '';
+        // const category = news.category || news.event_category || '미분류';
+        // const summary = news.summary || news.event_summary || '';
+        // const dateStr = news.created_at || news.date || '';
 
         return (
-          <div key={newsId} onClick={() => navigate(`/event-detail/${newsId}`)}>
+          <div key={news.event_id} onClick={() => navigate(`/event-detail/${news.event_id}`)}>
             <NewsCard
-              id={newsId}
-              themeId={topicId}
-              category={category}
-              title={title}
-              summary={summary}
-              date={dateStr ? dateStr.slice(0, 10).replaceAll('-', '.') : ''}
-              isBookmarked={scrappedNewsIds.includes(newsId)}
-              onBookmarkToggle={handleEventBookmarkToggle}
+              key={news.event_id}
+              id={news.event_id}
+              themeId={news.topic_id}
+              topic={news.topic_title || '미분류'}
+              title={news.event_title || '제목 없음'}
+              summary={news.summary || ''}
+              date={news.created_at ? news.created_at.slice(0, 10).replaceAll('-', '.') : ''}
+              isBookmarked={news.is_subscribed}
+              onSubscribeToggle={handleSubscribeToggle}
+              //onBookmarkToggle={handleBookmarkToggle}
             />
           </div>
         );

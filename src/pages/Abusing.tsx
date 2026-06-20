@@ -18,7 +18,7 @@ const CATEGORIES: { id: AbusingType | 'all'; title: string; description?: string
   },
 ];
 
-const EVENT_ID = 1; // 임시: event_id = 1
+//const EVENT_ID = 1; // 임시: event_id = 1
 const PAGE_SIZE = 4;
 
 export default function Abusing() {
