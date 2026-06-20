@@ -35,7 +35,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_ONESIGNAL_APP_ID: ${{ secrets.VITE_ONESIGNAL_APP_ID }}
-          VITE_VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
 
       # GitHub Actions Secrets에 저장한 AWS 키와 리전으로 AWS CLI 권한을 설정합니다.
       - name: Configure AWS credentials
