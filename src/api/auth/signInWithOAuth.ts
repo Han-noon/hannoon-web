@@ -4,7 +4,7 @@ export const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'http://localhost:5173/',
+      redirectTo: import.meta.env.VITE_SITE_URL || 'http://localhost:5173/',
     },
   });
 

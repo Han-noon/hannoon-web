@@ -8,35 +8,37 @@ import AbusingPage from '@/pages/Abusing';
 import Layout from '@/layout/Layout';
 
 import OneSignal from 'react-onesignal';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import NotificationPage from '@/pages/NotificationPage';
 import useOrientationSync from '@/hooks/useOrientationSync';
 import TimelineListPage from '@/pages/TimelineListPage';
+import useOneSignalAuth from '@/hooks/useOneSignalAuth';
 
 function App() {
+  const [oneSignalReady, setOneSignalReady] = useState(false);
+
   useOrientationSync();
 
   useEffect(() => {
-    // OneSignal 초기화 함수
     const initOneSignal = async () => {
       try {
         await OneSignal.init({
           appId: import.meta.env.VITE_ONESIGNAL_APP_ID!,
           allowLocalhostAsSecureOrigin: true,
-          notifyButton: {
-            enable: true, // 기본 종 모양 구독 버튼 활성화
-          } as any,
+          notifyButton: { enable: false } as any,
         });
 
-        console.log('OneSignal 초기화 성공!');
+        //console.log('OneSignal 초기화 성공!');
+        setOneSignalReady(true);
       } catch (error) {
-        console.error('OneSignal 초기화 실패:', error);
+        console.error(error);
       }
     };
 
-    // 배포환경에서만 실행
-    if (import.meta.env.PROD) initOneSignal();
+    initOneSignal();
   }, []);
+
+  useOneSignalAuth(oneSignalReady);
 
   return (
     <Routes>

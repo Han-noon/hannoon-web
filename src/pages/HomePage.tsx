@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import NewsCard from '@/components/NewsCard';
 import Pagination from '@/components/Pagination';
 import { getEvents } from '@/api/event/getEvents';
@@ -37,12 +37,11 @@ const AlertModal: React.FC<{
 };
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [bookmarkedIds, setBookmarkedIds] = useState<number[]>(() => {
-    const saved = localStorage.getItem('scrappedNewsIds');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // const [bookmarkedIds, setBookmarkedIds] = useState<number[]>(() => {
+  //   const saved = localStorage.getItem('scrappedNewsIds');
+  //   return saved ? JSON.parse(saved) : [];
+  // });
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   // 💡 상단 카드 로직 주석 처리에 따라 브리핑 데이터 상태만 사용
@@ -57,17 +56,28 @@ const HomePage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  const handleBookmarkToggle = (newsId: number) => {
-    const isCurrentlyScrapped = bookmarkedIds.includes(newsId);
-    if (!isCurrentlyScrapped) {
-      const updated = [...bookmarkedIds, newsId];
-      setBookmarkedIds(updated);
-      localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
-    } else {
-      const updated = bookmarkedIds.filter((id) => id !== newsId);
-      setBookmarkedIds(updated);
-      localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
-    }
+  // 관련 코드 NewsCard 컴포넌트로 이동
+  // const handleBookmarkToggle = async (newsId: number) => {
+  //   const isCurrentlyScrapped = bookmarkedIds.includes(newsId);
+  //   if (!isCurrentlyScrapped) {
+  //     const updated = [...bookmarkedIds, newsId];
+  //     setBookmarkedIds(updated);
+  //     localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+  //   } else {
+  //     const updated = bookmarkedIds.filter((id) => id !== newsId);
+  //     setBookmarkedIds(updated);
+  //     localStorage.setItem('scrappedNewsIds', JSON.stringify(updated));
+  //   }
+  // };
+
+  const handleSubscribeToggle = (targetThemeId: number, nextState: boolean) => {
+    setBriefingData((prevData) =>
+      prevData.map((news) =>
+        news.topic_id === targetThemeId
+          ? { ...news, is_subscribed: nextState } // 토픽 ID가 같으면 스크랩 여부 변경
+          : news
+      )
+    );
   };
 
   const { keyword, search } = useSearchStore();
@@ -154,18 +164,18 @@ const HomePage: React.FC = () => {
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
             {briefingData.length > 0 ? (
               briefingData.map((news) => (
-                <div key={news.event_id} onClick={() => navigate(`/event-detail/${news.event_id}`)}>
-                  <NewsCard
-                    id={news.event_id}
-                    themeId={news.topic_id}
-                    category={news.category || '미분류'}
-                    title={news.title || '제목 없음'}
-                    summary={news.summary || ''}
-                    date={news.created_at ? news.created_at.slice(0, 10).replaceAll('-', '.') : ''}
-                    isBookmarked={bookmarkedIds.includes(news.event_id)}
-                    onBookmarkToggle={handleBookmarkToggle}
-                  />
-                </div>
+                <NewsCard
+                  key={news.event_id}
+                  id={news.event_id}
+                  themeId={news.topic_id}
+                  topic={news.topic_title || '미분류'}
+                  title={news.event_title || '제목 없음'}
+                  summary={news.summary || ''}
+                  date={news.created_at ? news.created_at.slice(0, 10).replaceAll('-', '.') : ''}
+                  isBookmarked={news.is_subscribed}
+                  onSubscribeToggle={handleSubscribeToggle}
+                  //onBookmarkToggle={handleBookmarkToggle}
+                />
               ))
             ) : (
               <div className="col-span-full py-16 text-center text-gray-400 text-[14px]">
