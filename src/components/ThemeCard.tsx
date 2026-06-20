@@ -57,7 +57,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
 
       {/* 본문 섹션 */}
       <div className="px-[18px] pt-[10px] flex-grow overflow-hidden">
-        <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.2] break-keep">
+        <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.2] break-keep line-clamp-2 min-h-[44px]">
           {title}
         </h3>
         <p className="text-[12px] text-gray-500 line-clamp-4 leading-relaxed font-light">
