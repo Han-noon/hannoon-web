@@ -30,12 +30,12 @@ const ArticleList = () => {
     };
 
     fetchArticles();
-  }, [currentPage, biasFilter, timeFilter]);
+  }, [currentPage, biasFilter, timeFilter, id]);
 
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between mb-4">
-        <h1 className="text-lg md:text-2xl font-bold mb-3 md:mb-0">요약에 사용된 기사 리스트</h1>
+        <h1 className="text-lg md:text-2xl font-bold mb-3 md:mb-0">이슈 생성에 사용된 기사</h1>
         <div className="text-sm flex gap-2">
           <BiasFilteringBtn biasFilter={biasFilter} setBiasFilter={setBiasFilter} />
           <TimeFilteringBtn timeFilter={timeFilter} setTimeFilter={setTimeFilter} />

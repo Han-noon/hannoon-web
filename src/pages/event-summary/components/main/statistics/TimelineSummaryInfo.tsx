@@ -16,9 +16,9 @@ const TimelineSummaryInfo = ({ event }: { event: EventSummary }) => {
 
   return (
     <section className="w-full">
-      <p className="border-y border-gray47 py-3 text-center">타임라인</p>
+      <p className="border-y border-gray47 py-3 text-center">이슈 타임라인</p>
       <div className="my-8 text-center">
-        <p className="mb-6">소속 토픽: {event.topic_title}</p>
+        {/* <p className="mb-6">소속 토픽: {event.topic_title}</p> */}
         <div className="md:min-w-[331px] flex h-36 text-sm relative px-2">
           <p className="absolute left-1/2 -translate-x-[55%] top-[13px] text-xs text-gray-400">●</p>
           <p className="absolute left-1/2 -translate-x-[55%] top-[63px] text-xs">●</p>
@@ -44,8 +44,9 @@ const TimelineSummaryInfo = ({ event }: { event: EventSummary }) => {
           </div>
         </div>
       </div>
-      {/*토픽 아이디로 바꿔야 함!*/}
-      <ShortcutButton path={`/timeline/${event.topic_id}`} name="전체 타임라인 보기" />
+      <div className="text-end">
+        <ShortcutButton path={`/timeline/${event.topic_id}`} name="전체 타임라인 보기" />
+      </div>
     </section>
   );
 };

@@ -69,15 +69,14 @@ const BiasInfo = ({ event }: { event: EventSummary }) => {
 
           {isOpen && (
             <div
-              className={`box-border text-xs absolute top-5 border-2 bg-white w-full p-3 rounded-xl grid grid-cols-6 md:grid-cols-3 gap-y-5 z-50
-                  ${bias === 'right' ? 'border-red-600' : bias === 'mid' ? 'border-purple-600' : 'border-blue-600'}
-                `}
+              className={`box-border text-xs absolute top-5 border-2 bg-white w-full p-3 rounded-xl flex flex-wrap gap-y-5 gap-x-2 z-50
+                ${bias === 'right' ? 'border-red-600' : bias === 'mid' ? 'border-purple-600' : 'border-blue-600'}`}
             >
               {bias &&
                 event.publishers[bias]?.map((publishers) => (
                   <div key={publishers} className="flex flex-col items-center">
-                    <p className="bg-gray-400 w-9 h-9 rounded-full mb-1"></p>
-                    <p>{publishers}</p>
+                    {/* <p className="bg-gray-400 w-9 h-9 rounded-full mb-1"></p> */}
+                    <p className="bg-slate-200 py-1 px-2 rounded-full">{publishers}</p>
                   </div>
                 ))}
             </div>

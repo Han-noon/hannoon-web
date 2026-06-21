@@ -10,8 +10,8 @@ const TimeFilteringBtn = ({ timeFilter, setTimeFilter }: ChildProps) => {
     <button
       type="button"
       onClick={() => setTimeFilter((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-      className="flex items-center justify-center gap-2 w-20 md:w-24 h-8 bg-[#d9d9d9] border border-[#c4c4c4] text-xs md:text-sm
-       hover:bg-[#d0d0d0] rounded-sm"
+      className="flex items-center justify-center gap-2 w-20 md:w-24 h-8 text-white bg-gray47
+        hover:bg-[#211D1E] text-xs md:text-sm rounded-md"
     >
       <div className="flex flex-col items-center">
         <svg
@@ -21,7 +21,7 @@ const TimeFilteringBtn = ({ timeFilter, setTimeFilter }: ChildProps) => {
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className={timeFilter === 'asc' ? 'text-black' : 'text-gray-400'}
+          className={timeFilter === 'asc' ? 'text-black' : 'text-white'}
         >
           <path d="m18 15-6-6-6 6" />
         </svg>
@@ -32,7 +32,7 @@ const TimeFilteringBtn = ({ timeFilter, setTimeFilter }: ChildProps) => {
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
-          className={timeFilter === 'desc' ? 'text-black' : 'text-gray-400'}
+          className={timeFilter === 'desc' ? 'text-black' : 'text-white'}
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
