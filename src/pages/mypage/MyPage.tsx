@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
 import Modal from './Modal';
