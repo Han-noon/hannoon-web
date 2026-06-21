@@ -15,8 +15,8 @@ const BiasFilteringBtn = ({ biasFilter, setBiasFilter }: ChildProps) => {
   return (
     <div className="relative">
       <button
-        className="w-20 md:w-24 h-8 flex items-center justify-around bg-[#d9d9d9] border border-[#c4c4c4] text-xs md:text-sm 
-        hover:bg-[#d0d0d0] rounded-sm"
+        className="w-20 md:w-24 h-8 flex items-center justify-around bg-gray47 text-xs md:text-sm text-white
+        hover:bg-[#211D1E] rounded-md"
         onClick={() => setIsOpen(!isOpen)}
       >
         {biasFilter === null ? '전체' : biasFilter}
@@ -32,12 +32,12 @@ const BiasFilteringBtn = ({ biasFilter, setBiasFilter }: ChildProps) => {
         </svg>
       </button>
       {isOpen && (
-        <ul className="bg-[#d9d9d9] text-center absolute w-full text-xs top-9 border border-[#c4c4c4] rounded-sm">
+        <ul className="bg-gray47 text-center absolute w-full text-xs top-8 border rounded-md text-white overflow-hidden">
           {biasList.map((data) => {
             return (
               <li
                 key={data}
-                className="p-2 hover:bg-[#eae9e9] cursor-pointer text-xs"
+                className="p-2 hover:bg-[#211D1E] cursor-pointer text-xs"
                 onClick={() => {
                   const bias = data === '전체' ? null : data;
                   setBiasFilter(bias);

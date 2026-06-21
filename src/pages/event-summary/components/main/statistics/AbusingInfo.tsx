@@ -17,7 +17,9 @@ const AbusingInfo = ({ event }: { event: EventSummary }) => {
           </p>
         </div>
       </div>
-      <ShortcutButton path={`/abusing/${event.event_id}`} name="관련 어뷰징 기사 보기" />
+      <div className="text-end">
+        <ShortcutButton path={`/abusing/${event.event_id}`} name="관련 어뷰징 기사 보기" />
+      </div>
     </section>
   );
 };

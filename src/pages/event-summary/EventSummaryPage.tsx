@@ -44,7 +44,7 @@ const EventSummaryPage = () => {
           {event && <Summary event={event} />}
 
           {/* 오른쪽-요약 관련 통계 */}
-          <article className="px-3 pt-3 lg:px-6 lg:pt-6">
+          <article className="min-w-0 px-3 pt-3 lg:px-6 lg:pt-6 lg:w-4/12">
             {/* 언론사 편향 지수 */}
             {event && <BiasInfo event={event} />}
 

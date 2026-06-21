@@ -6,14 +6,14 @@ const ArticleCard = ({ article }: { article: Article }) => {
 
   return (
     <a href={article.link} target="_blank" rel="noopener noreferrer">
-      <div className="flex flex-col md:flex-row bg-white p-5 border border-[#eae8e8] shadow-sm mb-4 rounded-md hover:cursor-pointer">
+      <div className="flex flex-col md:flex-row bg-white p-5 border border-[#cbcbcb] mb-4 rounded-md hover:cursor-pointer hover:bg-[#f1f1f1]">
         <div className="hidden md:block w-48 h-28">
           {article.article_image_url && (
-            <div>
-              <img src={article.article_image_url} />
+            <div className="w-[192px] h-[115px]">
+              <img className="w-full h-full" src={article.article_image_url} />
             </div>
           )}
-          {!article.article_image_url && <div className="w-full h-full bg-slate-300"></div>}
+          {!article.article_image_url && <div className="w-full h-full bg-[#e4e4e4]"></div>}
         </div>
         <div className="flex-1 md:ml-4">
           <div className="flex flex-col md:flex-row justify-between md:items-center mb-1 text-sm">

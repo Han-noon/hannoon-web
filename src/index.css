@@ -13,7 +13,7 @@
 html,
 body {
   font-family: 'Nanum Gothic', sans-serif;
-  background-color: #f8f9fa;
+  /* background-color: #f8f9fa; */
 
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */

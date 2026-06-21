@@ -66,35 +66,58 @@ const Meta = ({ event }: { event: EventSummary }) => {
 
       {/* 상단 */}
       <div className="flex justify-between items-center border-b-4 border-gray47 pb-1 text-sm md:text-base">
-        <p>사건요약</p>
-        <p className="text-base md:text-xl">{event.category}</p>
+        <p className="text-sm mt-2 text-gray-500">
+          {event.category} &gt; <b>[ 토픽 ] {event.topic_title}</b> &gt; [ 이슈 ]{' '}
+          {event.event_title}
+        </p>
+        {/* <p className="text-base md:text-xl">{event.category}</p> */}
         <button
-          className="border-b border-gray47 hover:border-blue-600 hover:text-blue-600"
+          className="bg-gray47 py-1 px-3 text-sm text-white rounded-full hover:bg-[#211D1E]"
           onClick={handleSubscribe}
         >
-          {subscribe ? '구독취소' : '구독하기'}
+          {subscribe ? '구독취소' : '타임라인 구독하기'}
         </button>
       </div>
 
       {/* 하단 */}
-      <div className="min-h-32 md:h-48 lg:h-32 flex flex-wrap lg:flex-nowrap justify-between border-y-2 border-gray47 mt-2 text-xs">
-        <div className="w-1/2 lg:min-w-72 lg:w-72 border-b-2 lg:border-b-0 border-r-2 border-gray47 flex items-center pl-3 md:pl-7 order-1 ">
-          {/* <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-slate-500"></div> */}
-          {/* <div className="ml-2 md:ml-4"> */}
+      <div className="min-h-30 md:h-40 lg:h-40 border-y-2 border-gray47 mt-2 text-xs">
+        {/* 이벤트명 */}
+        <div className="py-2 w-full flex flex-col justify-center items-center order-3 lg:order-2 mt-8 mb-2">
+          <p className="bg-gray47 text-white py-[3px] px-4 rounded-full mb-1 pb-[1px]">이슈</p>
+          <h1 className="text-lg md:text-2xl font-bold md:pb-4 md:mt-1 text-center">
+            {event.event_title}
+          </h1>
+        </div>
+
+        {/* 최초 보도일, 업데이트 날짜, 분석 기사수 */}
+        <div className="text-sm text-gray-500 flex gap-x-4 justify-end">
+          <p>
+            <b>최초보도</b> &nbsp;{event.created_at.slice(0, 10).replaceAll('-', '.')}
+          </p>
+          <p>
+            <b>수정</b> &nbsp;{event.updated_at.slice(0, 10).replaceAll('-', '.')}
+          </p>
+          <p>
+            <b>분석기사 수</b> &nbsp;{event.article_count}개
+          </p>
+        </div>
+        {/* <div className="w-1/2 lg:min-w-72 lg:w-72 border-b-2 lg:border-b-0 border-r-2 border-gray47 flex items-center pl-3 md:pl-7 order-1 ">
+          //<div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-slate-500"></div> 
+          //<div className="ml-2 md:ml-4"> 
           <div className="">
             <p className="text-gray-700">최초 보도</p>
             <p className="text-sm md:text-base">
               {event.created_at.slice(0, 10).replaceAll('-', '.')}
             </p>
           </div>
-        </div>
-        <div className="py-2 w-full lg:w-auto flex flex-col justify-center items-center order-3 lg:order-2">
-          <p>[ {event.topic_title} ]</p>
+        </div> */}
+        {/* <div className="py-2 w-full flex flex-col justify-center items-center order-3 lg:order-2">
+          <p className="text-sm">[ 이슈 ]</p>
           <h1 className="text-lg md:text-2xl font-bold md:pb-4 md:mt-1 text-center">
             {event.event_title}
           </h1>
-        </div>
-        <div
+        </div> */}
+        {/* <div
           className="w-1/2 lg:min-w-72 lg:w-72 border-b-2 lg:border-b-0 lg:border-l-2 border-gray47 flex items-center 
           justify-end pr-3 md:pr-7 gap-10 order-2 lg:order-3 py-1"
         >
@@ -111,7 +134,7 @@ const Meta = ({ event }: { event: EventSummary }) => {
             <p className="text-gray-700">분석 기사 수</p>
             <p className="text-sm md:text-base">{event.article_count}개</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );
