@@ -98,12 +98,12 @@ const NewsCard: React.FC<NewsCardProps> = ({
         onClick={() => navigate(`/event-detail/${id}`)}
         className={`
         ${isLong ? 'bg-[#F3F3F4]' : 'bg-white'} 
-        border border-[#D7D7D7] rounded-[8px] flex flex-col overflow-hidden h-[185px] w-full 
-        hover:shadow-sm transition-all group cursor-pointer
+        border border-[#D7D7D7] rounded-[8px] flex flex-col overflow-hidden h-[210px] w-full 
+        hover:shadow-sm transition-all group cursor-pointer hover:bg-[#f1f1f1]
       `}
       >
         <div className="px-[18px] pt-[10px] pb-[4px] flex justify-between items-center">
-          <span className="text-[11px] font-medium text-gray-400">{topic}</span>
+          <span className="text-xs font-medium text-gray-400 line-clamp-1">토픽: {topic}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -113,10 +113,10 @@ const NewsCard: React.FC<NewsCardProps> = ({
             className={`transition-colors ${isBookmarked ? 'text-[#474747]' : 'text-gray-300 hover:text-[#474747]'}`}
           >
             <svg
-              width="16"
-              height="16"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
-              fill={isBookmarked ? 'currentColor' : 'none'}
+              fill={isBookmarked ? 'currentColor' : 'white'}
               stroke="currentColor"
               strokeWidth="1.8"
               strokeLinecap="round"
@@ -127,11 +127,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
           </button>
         </div>
         <div className="mx-[18px] border-b border-[#D7D7D7]" />
-        <div className="px-[18px] pt-[8px] pb-[2px] flex-grow overflow-hidden">
-          <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.25] break-keep line-clamp-2">
-            {title}
+        <div className="px-[18px] pt-4 pb-[2px] flex-grow overflow-hidden">
+          <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.5] break-keep line-clamp-2">
+            # {title}
           </h3>
-          <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">
+          <p className="mt-3 text-[12px] text-gray-500 line-clamp-2 leading-[1.7] font-light">
             <span className="font-semibold text-[#474747]">AI 요약: </span>
             {cleanSummary}
           </p>
