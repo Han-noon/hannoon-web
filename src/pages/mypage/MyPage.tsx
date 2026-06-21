@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
 import Modal from './Modal';
@@ -70,7 +70,7 @@ const MyPage: React.FC = () => {
     }
   }, [currentPage]);
 
-  // 프로필 로드 (최초 1회)
+  // 프로필 로드
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true);
@@ -93,7 +93,7 @@ const MyPage: React.FC = () => {
     fetchProfile();
   }, []);
 
-  // 스크랩 탭 데이터 패칭
+  // 스크랩 탭
   useEffect(() => {
     if (activeTab !== 'scrapped') return;
 
@@ -114,7 +114,7 @@ const MyPage: React.FC = () => {
     fetchSubscriptions();
   }, [activeTab, currentPage]);
 
-  // 최근 본 사건 탭 데이터 패칭
+  // 최근 본 사건 탭
   useEffect(() => {
     if (activeTab !== 'recent') return;
 
@@ -153,7 +153,9 @@ const MyPage: React.FC = () => {
   const handleSubscribeToggle = (targetThemeId: number, nextState: boolean) => {
     setRecentEvents((prevData) =>
       prevData.map((news) =>
-        news.topic_id === targetThemeId ? { ...news, is_subscribed: nextState } : news
+        news.topic_id === targetThemeId
+          ? { ...news, is_subscribed: nextState } // 토픽 ID가 같으면 스크랩 여부 변경
+          : news
       )
     );
   };
@@ -303,23 +305,27 @@ const MyPage: React.FC = () => {
       return scrappedTopics.map((topic) => {
         const targetId = topic.id || (topic as any).topic_id || (topic as any).themeId;
         return (
-          <ThemeCard
+          <Link
             key={topic.id}
-            id={targetId}
-            category={topic.category || '미분류'}
-            title={(topic as any).topic_title || topic.title || '제목 없음'}
-            summary={topic.summary || ''}
-            firstReportDate={
-              topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
-            }
-            latestReportDate={
-              topic.updated_at ? topic.updated_at.slice(0, 10).replaceAll('-', '.') : ''
-            }
-            isBookmarked={true}
-            onBookmarkToggle={handleBookmarkToggle}
-            // 💡 스크랩한 토픽은 백엔드 구조에 맞게 팀원분 말대로 /timeline 으로 이동!
-            onClick={() => navigate(`/timeline/${targetId}`)}
-          />
+            to={`/timeline/${targetId}`}
+            className="block w-full h-full cursor-pointer no-underline text-inherit"
+            onClick={() => window.scrollTo(0, 0)}
+          >
+            <ThemeCard
+              id={targetId}
+              category={topic.category || '미분류'}
+              title={(topic as any).topic_title || topic.title || '제목 없음'}
+              summary={topic.summary || ''}
+              firstReportDate={
+                topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
+              }
+              latestReportDate={
+                topic.updated_at ? topic.updated_at.slice(0, 10).replaceAll('-', '.') : ''
+              }
+              isBookmarked={true}
+              onBookmarkToggle={handleBookmarkToggle}
+            />
+          </Link>
         );
       });
     }
@@ -358,17 +364,17 @@ const MyPage: React.FC = () => {
 
       return recentEvents.map((news) => {
         if (!news) return null;
+
         const targetId = news.event_id || news.id;
 
         return (
-          // 💡 최근 본 사건은 이벤트이므로 정상적으로 /event-detail 로 이동!
-          <div
+          <Link
             key={targetId}
-            onClick={() => navigate(`/event-detail/${targetId}`)}
-            className="cursor-pointer block w-full h-full"
+            to={`/event-detail/${targetId}`}
+            className="block w-full h-full cursor-pointer no-underline text-inherit"
+            onClick={() => window.scrollTo(0, 0)}
           >
             <NewsCard
-              key={targetId}
               id={targetId}
               themeId={news.topic_id}
               topic={news.topic_title || '미분류'}
@@ -378,7 +384,7 @@ const MyPage: React.FC = () => {
               isBookmarked={news.is_subscribed}
               onSubscribeToggle={handleSubscribeToggle}
             />
-          </div>
+          </Link>
         );
       });
     }
@@ -401,16 +407,17 @@ const MyPage: React.FC = () => {
         <section className="flex flex-col md:flex-row md:items-end justify-between pb-8 mb-10">
           <div className="flex items-center space-x-8">
             <div className="relative">
-              <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center border border-gray-200 shadow-sm overflow-hidden">
+              <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center border border-gray-200 shadow-sm overflow-hidden">
                 <img
-                  src={userData.profileImage || '/default-profile.png'}
-                  alt="Profile"
+                  src={
+                    userData.profileImage && userData.profileImage !== 'null'
+                      ? userData.profileImage
+                      : '/default-profile.png'
+                  }
+                  alt="프로필 이미지"
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (!target.src.includes('default-profile.png')) {
-                      target.src = '/default-profile.png';
-                    }
+                    (e.target as HTMLImageElement).src = '/default-profile.png';
                   }}
                 />
               </div>
