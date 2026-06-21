@@ -21,7 +21,7 @@ interface UserData {
 }
 
 const MyPage: React.FC = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeTab = (searchParams.get('tab') as 'scrapped' | 'recent') || 'scrapped';
