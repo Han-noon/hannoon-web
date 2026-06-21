@@ -9,6 +9,7 @@ interface ThemeCardProps {
   latestReportDate: string;
   isBookmarked: boolean;
   onBookmarkToggle: (id: number) => void;
+  onClick?: () => void; // 💡 클릭 프롭 유지
 }
 
 const ThemeCard: React.FC<ThemeCardProps> = ({
@@ -20,12 +21,14 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
   latestReportDate,
   isBookmarked,
   onBookmarkToggle,
+  onClick,
 }) => {
   const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
 
   return (
     <div
       style={{ minHeight: '280px' }}
+      onClick={onClick}
       className="relative w-full bg-white border border-[#D7D7D7] rounded-[8px] flex flex-col overflow-hidden hover:shadow-sm transition-all group cursor-pointer"
     >
       {/* 상단 영역 */}
