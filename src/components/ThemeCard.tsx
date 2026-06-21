@@ -9,7 +9,7 @@ interface ThemeCardProps {
   latestReportDate: string;
   isBookmarked: boolean;
   onBookmarkToggle: (id: number) => void;
-  onClick?: () => void; // 💡 클릭 프롭 유지
+  onClick?: () => void;
 }
 
 const ThemeCard: React.FC<ThemeCardProps> = ({
