@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 type Props = {
   path: string;
   name: string;
-  is_subscribed: boolean | null;
+  is_subscribed?: boolean;
 };
 
 const ShortcutButton = ({ path, name, is_subscribed }: Props) => {
