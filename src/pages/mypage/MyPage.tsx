@@ -6,7 +6,7 @@ import Modal from './Modal';
 import { getProfile } from '@/api/profile/getProfile';
 import { updateProfileImage } from '@/api/profile/updateProfileImage';
 import { getSubscriptions } from '@/api/topic/getSubscriptions';
-import { unsubscribeTopic } from '@/api/topic/unsubscribeTopic';
+//import { unsubscribeTopic } from '@/api/topic/unsubscribeTopic';
 import { getViewedEvents } from '@/api/event/getViewedEvents';
 import { deleteUser } from '@/api/auth/deleteUser';
 import type { SubscribedTopic } from '@/api/topic/getSubscriptions';
@@ -136,19 +136,19 @@ const MyPage: React.FC = () => {
   }, [activeTab, currentPage]);
 
   // 스크랩한 토픽 북마크 해제
-  const handleBookmarkToggle = async (topicId: number) => {
-    try {
-      await unsubscribeTopic(topicId);
-      setScrappedTopics((prev) => prev.filter((t) => t.id !== topicId));
-      setTotalCount((prev) => prev - 1);
+  // const handleBookmarkToggle = async (topicId: number) => {
+  //   try {
+  //     await unsubscribeTopic(topicId);
+  //     setScrappedTopics((prev) => prev.filter((t) => t.id !== topicId));
+  //     setTotalCount((prev) => prev - 1);
 
-      if (scrappedTopics.length === 1 && currentPage > 1) {
-        handlePageChange(currentPage - 1);
-      }
-    } catch (error) {
-      console.error('스크랩 해제 실패:', error);
-    }
-  };
+  //     if (scrappedTopics.length === 1 && currentPage > 1) {
+  //       handlePageChange(currentPage - 1);
+  //     }
+  //   } catch (error) {
+  //     console.error('스크랩 해제 실패:', error);
+  //   }
+  // };
 
   const handleSubscribeToggle = (targetThemeId: number, nextState: boolean) => {
     setRecentEvents((prevData) =>
@@ -304,12 +304,11 @@ const MyPage: React.FC = () => {
 
       return scrappedTopics.map((topic) => {
         const targetId = topic.id || (topic as any).topic_id || (topic as any).themeId;
+        //console.log(topic);
         return (
-          <Link
+          <div
             key={topic.id}
-            to={`/timeline/${targetId}`}
             className="block w-full h-full cursor-pointer no-underline text-inherit"
-            onClick={() => window.scrollTo(0, 0)}
           >
             <ThemeCard
               id={targetId}
@@ -322,10 +321,10 @@ const MyPage: React.FC = () => {
               latestReportDate={
                 topic.updated_at ? topic.updated_at.slice(0, 10).replaceAll('-', '.') : ''
               }
-              isBookmarked={true}
-              onBookmarkToggle={handleBookmarkToggle}
+              isBookmarked={topic.is_subscribed}
+              //onBookmarkToggle={handleBookmarkToggle}
             />
-          </Link>
+          </div>
         );
       });
     }

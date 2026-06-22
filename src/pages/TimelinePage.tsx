@@ -91,7 +91,7 @@ const TimelinePage = () => {
 
         setEventsdata(data);
         setSelectedId(data.events[0].id);
-        console.log('결과:', data);
+        //console.log('결과:', data);
       } catch (error) {
         console.error('데이터 페칭 실패:', error);
       }
@@ -257,7 +257,7 @@ const TimelinePage = () => {
 
             <article
               ref={articleRef}
-              className="w-full lg:w-1/2 flex flex-col items-center min-w-0"
+              className="w-full lg:w-1/2 flex flex-col items-center min-w-0 "
             >
               <div className="w-full mb-5">
                 <img
