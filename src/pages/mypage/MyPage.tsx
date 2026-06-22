@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
 import Modal from './Modal';
@@ -367,11 +367,9 @@ const MyPage: React.FC = () => {
         const targetId = news.event_id || news.id;
 
         return (
-          <Link
+          <div
             key={targetId}
-            to={`/event-detail/${targetId}`}
             className="block w-full h-full cursor-pointer no-underline text-inherit"
-            onClick={() => window.scrollTo(0, 0)}
           >
             <NewsCard
               id={targetId}
@@ -383,7 +381,7 @@ const MyPage: React.FC = () => {
               isBookmarked={news.is_subscribed}
               onSubscribeToggle={handleSubscribeToggle}
             />
-          </Link>
+          </div>
         );
       });
     }
