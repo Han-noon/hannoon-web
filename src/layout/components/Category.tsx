@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 const Category = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _] = useSearchParams();
   const location = useLocation(); // 현재 URL 경로를 가져옴
+  const navigate = useNavigate();
 
   const currentCategory = searchParams.get('category') || '전체';
 
@@ -47,10 +48,14 @@ const Category = () => {
           {categories.map((c) => (
             <button
               key={c}
-              onClick={() => setSearchParams({ category: c })}
+              onClick={() => {
+                navigate(
+                  currentMenuLabel === '토픽' ? `/timeline?category=${c}` : `/?category=${c}`
+                );
+              }}
               className={`whitespace-nowrap font-medium border-0 transition-colors ${
                 currentCategory === c
-                  ? 'text-[#474747] font-bold'
+                  ? 'text-[#474747] underline underline-offset-4'
                   : 'text-[#a3a3a3] hover:text-[#474747]'
               }`}
             >
