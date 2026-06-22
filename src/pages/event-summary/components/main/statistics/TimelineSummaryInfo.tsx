@@ -45,7 +45,11 @@ const TimelineSummaryInfo = ({ event }: { event: EventSummary }) => {
         </div>
       </div>
       <div className="text-end">
-        <ShortcutButton path={`/timeline/${event.topic_id}`} name="전체 타임라인 보기" />
+        <ShortcutButton
+          path={`/timeline/${event.topic_id}`}
+          is_subscribed={event.is_subscribed}
+          name="전체 타임라인 보기"
+        />
       </div>
     </section>
   );
