@@ -55,7 +55,7 @@ const Category = () => {
               }}
               className={`whitespace-nowrap font-medium border-0 transition-colors ${
                 currentCategory === c
-                  ? 'text-[#474747] font-bold'
+                  ? 'text-[#474747] underline underline-offset-4'
                   : 'text-[#a3a3a3] hover:text-[#474747]'
               }`}
             >

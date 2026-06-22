@@ -6,19 +6,21 @@ import AbusingInfo from '@/pages/event-summary/components/main/statistics/Abusin
 import { useState, useEffect } from 'react';
 import { getEvent } from '@/api/event/getEvent';
 import type { EventSummary } from '@/types/eventSummary';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ArticleList from '@/pages/event-summary/components/article-list/ArticleList';
 import Spinner from '@/components/Spinner';
 
 const EventSummaryPage = () => {
   const [event, setEvent] = useState<EventSummary | null>(null);
   const { id } = useParams();
+  const [, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         const data = await getEvent(Number(id) || 1); // 임시: event_id = 1
         setEvent(data);
+        setSearchParams({ category: data.category });
       } catch (error) {
         console.error(error);
       }
