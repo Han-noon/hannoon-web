@@ -1,4 +1,4 @@
-import img from '@/assets/back.jpg';
+import img from '@/assets/back.png';
 import type { EventSummary } from '@/types/eventSummary';
 
 const Summary = ({ event }: { event: EventSummary }) => {
