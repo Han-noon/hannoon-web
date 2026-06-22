@@ -1,5 +1,5 @@
 import React, { useId, useRef, useState } from 'react';
-import headerBg from '@/assets/back1.jpg';
+import headerBg from '@/assets/back.png';
 import MobileMenu from '@/layout/components/menu/MobileMenu';
 import useNotificationStore from '@/store/notificationStore';
 import useMediaQuery from '@/hooks/useMediaQuery';
@@ -130,7 +130,7 @@ const Header = () => {
         </nav>
       </div>
       <h1 className="mt-7 md:mt-12 font-bold text-[#dddddd] text-l md:text-2xl flex items-center justify-center">
-        오늘의 이슈, 관점을 더하다
+        Media Literacy, 정보를 읽는 눈
       </h1>
       <div className="flex justify-center">
         <form

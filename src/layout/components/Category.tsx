@@ -10,13 +10,11 @@ const Category = () => {
 
   const categories = ['전체', '정치', '경제', '사회', '국제'];
   const dropMenus = [
-    { label: '사건 리스트', to: '/' },
-    { label: '타임라인으로 보는 사건', to: '/timeline' },
+    { label: '이슈', to: '/' },
+    { label: '토픽', to: '/timeline' },
   ];
 
-  const currentMenuLabel = location.pathname.startsWith('/timeline')
-    ? '타임라인으로 보는 사건'
-    : '사건 리스트';
+  const currentMenuLabel = location.pathname.startsWith('/timeline') ? '토픽' : '이슈';
 
   return (
     <div className="w-full h-9 md:h-11 bg-white border-b border-gray-200 flex items-center shadow-[0px_1px_2px_0px_#e0dfdf] text-xs md:text-sm">

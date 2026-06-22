@@ -85,7 +85,7 @@ const Meta = ({ event }: { event: EventSummary }) => {
         <div className="py-2 w-full flex flex-col justify-center items-center order-3 lg:order-2 mt-8 mb-2">
           <p className="bg-gray47 text-white py-[3px] px-4 rounded-full mb-1 pb-[1px]">이슈</p>
           <h1 className="text-lg md:text-2xl font-bold md:pb-4 md:mt-1 text-center">
-            {event.event_title}
+            # {event.event_title}
           </h1>
         </div>
 

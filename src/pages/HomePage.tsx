@@ -145,8 +145,8 @@ const HomePage: React.FC = () => {
         </section> */}
 
         <section className="mb-8 flex items-start gap-4">
-          <h2 className="text-[24px] font-bold text-black tracking-tight leading-none shrink-0">
-            이슈 브리핑
+          <h2 className="text-4xl font-bold text-black tracking-tight leading-none shrink-0">
+            이슈
           </h2>
           <div className="flex-grow pt-[12px]">
             <div className="h-[1px] bg-[#D7D7D7] opacity-50 w-full"></div>
@@ -161,7 +161,7 @@ const HomePage: React.FC = () => {
             데이터를 불러오는 중...
           </div>
         ) : (
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-2 gap-y-6">
             {briefingData.length > 0 ? (
               briefingData.map((news) => (
                 <NewsCard
