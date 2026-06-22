@@ -53,7 +53,7 @@ const HomePage: React.FC = () => {
   const selectedCategory = searchParams.get('category') || '전체';
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 200, behavior: 'smooth' });
   }, [currentPage]);
 
   // 관련 코드 NewsCard 컴포넌트로 이동

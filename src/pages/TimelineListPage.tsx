@@ -43,6 +43,11 @@ const TimelineListPage = () => {
     };
 
     fetchEvent();
+
+    window.scrollTo({
+      top: 200,
+      behavior: 'smooth',
+    });
   }, [currentPage, currentCategory, search, location.key]);
 
   // const handleBookmarkToggle = async (id: number) => {

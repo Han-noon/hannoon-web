@@ -66,7 +66,7 @@ const Meta = ({ event }: { event: EventSummary }) => {
 
       {/* 상단 */}
       <div className="flex justify-between items-center border-b-4 border-gray47 pb-1 text-sm md:text-base">
-        <p className="text-sm mt-2 text-gray-500">
+        <p className="text-sm mt-2 text-gray-500 line-clamp-1">
           {event.category} &gt; <b>[ 토픽 ] {event.topic_title}</b> &gt; [ 이슈 ]{' '}
           {event.event_title}
         </p>
