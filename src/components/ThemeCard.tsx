@@ -98,7 +98,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
       >
         {/* 상단 영역 */}
         <div className="px-[18px] pt-[18px] pb-[10px] flex justify-between items-center">
-          <span className="px-4 py-[1px] bg-[#53474a] text-white text-[11px] rounded-full uppercase tracking-wider">
+          <span className="px-4 flex justify-center bg-[#53474a] text-white text-[11px] rounded-full uppercase tracking-wider">
             {category}
           </span>
           <button
