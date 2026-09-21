@@ -6,26 +6,32 @@ import useSession from '@/hooks/useSession';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface ThemeCardProps {
+export interface ThemeCardProps {
   id: number;
   category: string;
+  keyword?: string; // ex: 기준금리
   title: string;
   summary: string;
   firstReportDate: string;
-  latestReportDate: string;
+  latestReportDate?: string;
   isBookmarked: boolean;
-  //onBookmarkToggle: (id: number) => void;
+  articleCount?: number; // 관련 기사 개수
+  bias?: { left: number; center: number; right: number }; // 성향 퍼센트
+  imageUrl?: string; // 썸네일 이미지
 }
 
 const ThemeCard: React.FC<ThemeCardProps> = ({
   id,
   category,
+  keyword = '키워드',
   title,
   summary,
   firstReportDate,
-  latestReportDate,
+  latestReportDate, // 기존 prop 호환 유지
   isBookmarked,
-  //onBookmarkToggle,
+  articleCount = 98,
+  bias = { left: 18, center: 60, right: 22 },
+  imageUrl = 'https://via.placeholder.com/400x200?text=News+Thumbnail',
 }) => {
   const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
 
@@ -44,7 +50,6 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
 
     if (!subscribe) {
       let permission = Notification.permission;
-
       if (permission === 'default') {
         permission = await Notification.requestPermission();
       }
@@ -55,7 +60,6 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
       }
 
       const data = await subscribeTopic(id);
-
       setSubscribe(data.is_subscribed);
 
       if (data.is_subscribed) {
@@ -78,71 +82,111 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
         topicTitle={title}
         onClose={() => setIsModalOpen(false)}
       />
-
       <NotificationPermissionModal
         isOpen={showPermissionModal}
         onClose={() => setShowPermissionModal(false)}
       />
 
       <div
-        style={{ minHeight: '280px' }}
-        className="relative w-full bg-white border border-[#D7D7D7] rounded-[8px] 
-                   flex flex-col overflow-hidden hover:shadow-sm transition-all group cursor-pointer hover:bg-[#f1f1f1]"
+        className="relative w-full bg-white border border-gray-200 rounded-[14px] flex flex-col overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
         onClick={() =>
           navigate(`/timeline/${id}`, {
-            state: {
-              is_subscribed: subscribe,
-            },
+            state: { is_subscribed: subscribe },
           })
         }
       >
-        {/* 상단 영역 */}
-        <div className="px-[18px] pt-[18px] pb-[10px] flex justify-between items-center">
-          <span className="px-4 flex justify-center bg-[#53474a] text-white text-[11px] rounded-full uppercase tracking-wider">
-            {category}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSubscribe();
-            }}
-            className={`transition-colors ${subscribe ? 'text-[#474747]' : 'text-gray-300 hover:text-[#474747]'}`}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill={subscribe ? 'currentColor' : 'white'}
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        {/* 상단 썸네일 이미지 영역 */}
+        <div className="w-full h-[150px] bg-gray-200 overflow-hidden relative">
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        {/* 본문 콘텐츠 영역 */}
+        <div className="p-5 flex flex-col flex-grow">
+          {/* 카테고리, 해시태그 & 북마크 */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-1.5 text-[12px] font-bold">
+              <span className="text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                {category}
+              </span>
+              <span className="text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
+                #{keyword}
+              </span>
+            </div>
+
+            {/* 북마크 아이콘 수정: 비활성 시 회색 선, 활성 시 보라색 면 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSubscribe();
+              }}
+              className={`transition-transform hover:scale-110 ${subscribe ? 'text-purple-600' : 'text-gray-300 hover:text-gray-400'}`}
             >
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
-        </div>
-
-        {/* 본문 섹션 */}
-        <div className="px-[18px] pt-[10px] flex-grow overflow-hidden">
-          <h3 className="text-[18px] font-bold text-black mb-1.5 leading-[1.5] break-keep line-clamp-2 min-h-[44px]">
-            # {title}
-          </h3>
-          <p className="text-[12px] text-gray-500 line-clamp-3 leading-[1.7] mt-4">
-            <b className=" text-[#474747]">AI 요약: </b>
-            {cleanSummary}
-          </p>
-        </div>
-
-        {/* 하단 날짜 */}
-        <div className="border-t border-[#e5e7eb] px-[18px] py-3 text-xs text-[#474747] flex flex-col gap-1.5 mt-auto">
-          <div className="flex items-center">
-            <span className="w-14 text-gray-400">최초 이슈:</span>
-            <span>{firstReportDate}</span>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill={subscribe ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
           </div>
-          <div className="flex items-center">
-            <span className="w-14 text-gray-400">최신 이슈:</span>
-            <span>{latestReportDate}</span>
+
+          {/* 제목 */}
+          <h3 className="text-[17px] font-bold text-gray-900 mb-4 leading-[1.4] line-clamp-2 break-keep">
+            {title}
+          </h3>
+
+          {/* AI 요약 박스 */}
+          <div className="bg-[#F8F9FA] rounded-xl p-4 mb-5 border border-gray-100">
+            <p className="text-blue-600 font-bold text-[13px] mb-1.5">AI 요약</p>
+            <p className="text-[13px] text-gray-600 leading-[1.6] line-clamp-3 break-keep">
+              {cleanSummary}
+            </p>
+          </div>
+
+          {/* 하단 정보 & 성향 통계 */}
+          <div className="mt-auto">
+            <div className="flex justify-between items-center text-[12px] text-gray-500 mb-2.5">
+              <span>최초 보도 | {firstReportDate}</span>
+              <span>관련 기사 {articleCount}개</span>
+            </div>
+
+            {/* 성향 바 */}
+            <div className="w-full h-1.5 flex rounded-full overflow-hidden mb-2.5">
+              <div className="bg-blue-600 h-full" style={{ width: `${bias.left}%` }}></div>
+              <div className="bg-purple-500 h-full" style={{ width: `${bias.center}%` }}></div>
+              <div className="bg-red-500 h-full" style={{ width: `${bias.right}%` }}></div>
+            </div>
+
+            <div className="flex justify-between items-center text-[12px]">
+              <div className="flex gap-2.5 font-bold tracking-tight">
+                <span className="text-blue-600">진보 {bias.left}%</span>
+                <span className="text-purple-500">중도 {bias.center}%</span>
+                <span className="text-red-500">보수 {bias.right}%</span>
+              </div>
+              <div className="text-gray-600 font-medium flex items-center gap-0.5">
+                타임라인 보기
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>
