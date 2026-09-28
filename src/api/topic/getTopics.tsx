@@ -10,7 +10,7 @@ export const getTopics = async (
     p_category,
     p_page,
     p_search,
-    p_size: 9,
+    p_size: 6,
   });
 
   if (error) throw error;

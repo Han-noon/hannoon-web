@@ -2,9 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
-import { getEvents } from '@/api/event/getEvents';
-import type { EventItem } from '@/types/eventCard';
+import { getTopics } from '@/api/topic/getTopics';
 import { useSearchStore } from '@/store/useSearchStore';
+import { supabase } from '@/lib/supabase';
+
+// --- API 응답 타입 정의 ---
+interface HotTopic {
+  rank: number;
+  topic_id: number;
+  title: string;
+  category: string;
+  article_count: number;
+}
+
+interface TimelineEvent {
+  id: number;
+  title: string;
+  occurred_at: string;
+  article_count: number;
+  is_latest: boolean;
+  is_active: boolean;
+}
+
+interface PopularTimeline {
+  as_of: string;
+  topic: {
+    id: number;
+    title: string;
+    category: string;
+  } | null;
+  events: TimelineEvent[];
+  window_hours: number;
+  view_count: number;
+  views_as_of: string;
+}
+
+// 토픽 메타 정보 타입
+interface TopicItem {
+  id: number;
+  category: string;
+  title: string;
+  summary: string;
+  created_at: string;
+  updated_at?: string;
+  is_subscribed?: boolean;
+  article_count?: number;
+  keyword?: string;
+}
+// -----------------------
 
 const AlertModal: React.FC<{
   isOpen: boolean;
@@ -41,9 +86,13 @@ const HomePage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'latest' | 'count'>('latest');
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
-  const [briefingData, setBriefingData] = useState<EventItem[]>([]);
+  const [topicData, setTopicData] = useState<TopicItem[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // 사이드바 상태 관리
+  const [hotTopics, setHotTopics] = useState<HotTopic[]>([]);
+  const [realtimeTimeline, setRealtimeTimeline] = useState<PopularTimeline | null>(null);
 
   const [searchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || '전체';
@@ -53,48 +102,68 @@ const HomePage: React.FC = () => {
     window.scrollTo({ top: 200, behavior: 'smooth' });
   }, [currentPage]);
 
+  // 메인 토픽 리스트 페칭
   useEffect(() => {
-    const fetchBriefings = async () => {
+    const fetchTopics = async () => {
       setIsLoading(true);
       try {
-        const categoryParam = selectedCategory === '전체' ? undefined : selectedCategory;
-        const response: any = await getEvents(currentPage, 6, keyword, categoryParam);
+        // 1. 카테고리가 '전체'일 경우 undefined 대신 null로 처리 (getTopics 타입 string | null에 맞춤)
+        const categoryParam = selectedCategory === '전체' ? null : selectedCategory;
+        const searchParam = keyword?.trim() ? keyword : null;
 
-        if (response && response.events) {
-          setBriefingData(response.events);
+        // 2. getTopics(p_category, p_page, p_search) 순서와 개수에 맞춰 호출
+        const response: any = await getTopics(categoryParam, currentPage, searchParam);
+
+        if (response && (response.topics || response.data)) {
+          setTopicData(response.topics || response.data);
           setTotalPages(response.total_pages || 1);
         } else {
-          setBriefingData([]);
+          setTopicData([]);
           setTotalPages(1);
         }
       } catch (error) {
-        console.error('API 에러:', error);
+        console.error('토픽 API 에러:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchBriefings();
-  }, [currentPage, selectedCategory, search]);
+    fetchTopics();
+  }, [currentPage, selectedCategory, search, keyword]);
 
-  // 오늘의 핫 토픽 랭킹 데이터
-  const hotTopics =
-    briefingData.length >= 5
-      ? briefingData.slice(0, 5).map((item, idx) => ({
-          id: item.event_id,
-          rank: idx + 1,
-          text: item.event_title || item.topic_title || '제목 없음',
-          count: `${Math.floor(Math.random() * 50) + 50}개 기사`,
-        }))
-      : [
-          { id: 101, rank: 1, text: '의대 정원 증원 및 의료 공백', count: '142개 기사' },
-          { id: 102, rank: 2, text: '한은 기준금리 연속 동결', count: '98개 기사' },
-          { id: 103, rank: 3, text: '26조 반도체 금융·인프라 지원', count: '84개 기사' },
-          { id: 104, rank: 4, text: '서울 AI 안전 정상회의', count: '76개 기사' },
-          { id: 105, rank: 5, text: '수도권 주택 매매 심리 동향', count: '63개 기사' },
-        ];
+  // 사이드바(핫 토픽 랭킹, 실시간 타임라인) API 연동
+  useEffect(() => {
+    const fetchSidebarData = async () => {
+      try {
+        // 오늘의 핫 토픽 랭킹 호출
+        const { data: hotData, error: hotError } = await supabase.rpc('get_hot_topics', {
+          p_window_hours: 1,
+          p_size: 5,
+        });
 
-  const realtimeTopicId = briefingData.length > 0 ? briefingData[0].event_id : 101;
-  const realtimeTopicTitle = '의대 정원 증원 논란';
+        if (!hotError && hotData) {
+          setHotTopics(hotData.topics || []);
+        }
+
+        // 실시간 인기 타임라인 호출
+        const { data: timeData, error: timeError } = await supabase.rpc(
+          'get_popular_topic_timeline',
+          {
+            p_window_hours: 1,
+            p_size: 3,
+            p_active_hours: 24,
+          }
+        );
+
+        if (!timeError && timeData) {
+          setRealtimeTimeline(timeData);
+        }
+      } catch (error) {
+        console.error('사이드바 API 에러:', error);
+      }
+    };
+
+    fetchSidebarData();
+  }, []);
 
   return (
     <div className="w-full pb-20 bg-white">
@@ -140,31 +209,34 @@ const HomePage: React.FC = () => {
             ) : (
               <>
                 <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {briefingData.length > 0 ? (
-                    briefingData.map((news) => (
+                  {topicData.length > 0 ? (
+                    topicData.map((topic) => (
                       <ThemeCard
-                        key={news.event_id}
-                        id={news.event_id}
-                        category={selectedCategory !== '전체' ? selectedCategory : '경제'}
-                        keyword={news.topic_title?.split(' ')[0] || '키워드'}
-                        title={news.event_title || '제목 없음'}
-                        summary={news.summary || ''}
-                        firstReportDate={
-                          news.created_at ? news.created_at.slice(0, 10).replaceAll('-', '.') : ''
+                        key={topic.id}
+                        id={topic.id}
+                        category={
+                          topic.category ||
+                          (selectedCategory !== '전체' ? selectedCategory : '기타')
                         }
-                        isBookmarked={news.is_subscribed}
-                        articleCount={Math.floor(Math.random() * 50) + 50}
+                        keyword={topic.keyword || topic.title?.split(' ')[0] || '키워드'}
+                        title={topic.title || '제목 없음'}
+                        summary={topic.summary || ''}
+                        firstReportDate={
+                          topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
+                        }
+                        isBookmarked={!!topic.is_subscribed}
+                        articleCount={topic.article_count || Math.floor(Math.random() * 50) + 50}
                         bias={{ left: 18, center: 60, right: 22 }}
                       />
                     ))
                   ) : (
                     <div className="col-span-full py-20 bg-white rounded-xl text-center text-gray-400 text-[14px]">
-                      해당 카테고리의 사건이 없습니다.
+                      해당 카테고리의 토픽이 없습니다.
                     </div>
                   )}
                 </section>
 
-                {briefingData.length > 0 && (
+                {topicData.length > 0 && (
                   <div className="mt-8 flex justify-center">
                     <Pagination
                       currentPage={currentPage}
@@ -188,26 +260,36 @@ const HomePage: React.FC = () => {
                 </span>
               </div>
               <ol className="flex flex-col gap-1 text-[14px]">
-                {hotTopics.map((item) => (
-                  <li key={item.rank}>
-                    <Link
-                      to={`/timeline/${item.id}`}
-                      className="group flex items-center justify-between text-gray-700 hover:bg-gray-50 p-2.5 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <span
-                          className={`font-bold w-4 text-center shrink-0 ${item.rank <= 3 ? 'text-blue-600' : 'text-gray-400'}`}
-                        >
-                          {item.rank}
+                {hotTopics.length > 0 ? (
+                  hotTopics.map((item) => (
+                    <li key={item.topic_id}>
+                      <Link
+                        to={`/timeline/${item.topic_id}`}
+                        className="group flex items-center justify-between text-gray-700 hover:bg-gray-50 p-2.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <span
+                            className={`font-bold w-4 text-center shrink-0 ${
+                              item.rank <= 3 ? 'text-blue-600' : 'text-gray-400'
+                            }`}
+                          >
+                            {item.rank}
+                          </span>
+                          <span className="truncate transition-all duration-200 group-hover:text-gray-900 group-hover:font-bold">
+                            {item.title}
+                          </span>
+                        </div>
+                        <span className="text-[12px] text-gray-400 shrink-0 ml-2">
+                          {item.article_count}개 기사
                         </span>
-                        <span className="truncate transition-all duration-200 group-hover:text-gray-900 group-hover:font-bold">
-                          {item.text}
-                        </span>
-                      </div>
-                      <span className="text-[12px] text-gray-400 shrink-0 ml-2">{item.count}</span>
-                    </Link>
+                      </Link>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-center text-[13px] text-gray-400 py-4">
+                    랭킹 데이터가 없습니다.
                   </li>
-                ))}
+                )}
               </ol>
             </div>
 
@@ -223,43 +305,54 @@ const HomePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-gray-200">
-                <div className="text-[13px] font-bold text-gray-800 mb-3">
-                  토픽 : [{realtimeTopicTitle}]
-                </div>
-                <ul className="space-y-3 relative pl-3 before:absolute before:left-1 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
-                  <li className="relative pl-3">
-                    <span className="absolute -left-[11px] top-1.5 w-2 h-2 rounded-full bg-blue-600 border-2 border-white" />
-                    <p className="text-[12px] font-semibold text-gray-800">이벤트 1. 정부안 발표</p>
-                    <p className="text-[11px] text-gray-400">
-                      2024.02.06 · 의대 2,000명 확대 공식화
-                    </p>
-                  </li>
-                  <li className="relative pl-3">
-                    <span className="absolute -left-[11px] top-1.5 w-2 h-2 rounded-full bg-blue-600 border-2 border-white" />
-                    <p className="text-[12px] font-semibold text-gray-800">
-                      이벤트 2. 전공의 집단 사직
-                    </p>
-                    <p className="text-[11px] text-gray-400">
-                      2024.02.19 · 주요 대형병원 근무 중단
-                    </p>
-                  </li>
-                  <li className="relative pl-3">
-                    <span className="absolute -left-[11px] top-1.5 w-2 h-2 rounded-full bg-blue-600 border-2 border-white" />
-                    <p className="text-[12px] font-semibold text-blue-600">
-                      이벤트 3. 비상 진료체계 (현재)
-                    </p>
-                    <p className="text-[11px] text-blue-500 font-medium">2024.05 집중 보도 중</p>
-                  </li>
-                </ul>
+              {realtimeTimeline && realtimeTimeline.topic ? (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-[13px] font-bold text-gray-800 mb-3">
+                    토픽 : [{realtimeTimeline.topic.title || '제목 없음'}]
+                  </div>
+                  <ul className="space-y-3 relative pl-3 before:absolute before:left-1 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
+                    {(realtimeTimeline.events || []).map((event, index) => (
+                      <li key={event.id} className="relative pl-3">
+                        <span
+                          className={`absolute -left-[11px] top-1.5 w-2 h-2 rounded-full border-2 border-white ${
+                            event.is_active || event.is_latest ? 'bg-blue-600' : 'bg-gray-300'
+                          }`}
+                        />
+                        <p
+                          className={`text-[12px] font-semibold ${
+                            event.is_active || event.is_latest ? 'text-blue-600' : 'text-gray-800'
+                          }`}
+                        >
+                          이벤트 {index + 1}. {event.title} {event.is_latest ? '(현재)' : ''}
+                        </p>
+                        <p
+                          className={`text-[11px] mt-0.5 ${
+                            event.is_active || event.is_latest
+                              ? 'text-blue-500 font-medium'
+                              : 'text-gray-400'
+                          }`}
+                        >
+                          {event.occurred_at
+                            ? event.occurred_at.slice(0, 10).replaceAll('-', '.')
+                            : ''}{' '}
+                          · {event.article_count}개 기사
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
 
-                <Link
-                  to={`/timeline/${realtimeTopicId}`}
-                  className="mt-4 flex items-center justify-center text-[12px] text-gray-500 hover:text-gray-900 hover:font-bold transition-all pt-3 border-t border-gray-100"
-                >
-                  타임라인 전체보기 &gt;
-                </Link>
-              </div>
+                  <Link
+                    to={`/timeline/${realtimeTimeline.topic.id}`}
+                    className="mt-4 flex items-center justify-center text-[12px] text-gray-500 hover:text-gray-900 hover:font-bold transition-all pt-3 border-t border-gray-100"
+                  >
+                    타임라인 전체보기 &gt;
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center text-[13px] text-gray-400 py-4 border-t border-gray-100 mt-4 pt-4">
+                  현재 진행 중인 실시간 타임라인이 없습니다.
+                </div>
+              )}
             </div>
 
             {/* 뉴스 읽기 가이드 */}
