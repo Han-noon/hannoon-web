@@ -13,6 +13,7 @@ import NotificationPage from '@/pages/NotificationPage';
 import useOrientationSync from '@/hooks/useOrientationSync';
 import TimelineListPage from '@/pages/TimelineListPage';
 import useOneSignalAuth from '@/hooks/useOneSignalAuth';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {
   const [oneSignalReady, setOneSignalReady] = useState(false);
@@ -44,16 +45,18 @@ function App() {
     <Routes>
       <Route path="/signin" element={<SignInPage />}></Route>
 
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/timeline" element={<TimelineListPage />} />
-        <Route path="/mypage" element={<MyPage />}></Route>
-        <Route path="/event-detail/:id" element={<EventSummaryPage />}></Route>
-        <Route path="/timeline/:topic_id" element={<TimelinePage />}></Route>
-        <Route path="/abusing/:id" element={<AbusingPage />}></Route>
-      </Route>
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/timeline" element={<TimelineListPage />} />
+          <Route path="/mypage" element={<MyPage />}></Route>
+          <Route path="/event-detail/:id" element={<EventSummaryPage />}></Route>
+          <Route path="/timeline/:topic_id" element={<TimelinePage />}></Route>
+          <Route path="/abusing/:id" element={<AbusingPage />}></Route>
+        </Route>
 
-      <Route path="/notification" element={<NotificationPage />} />
+        <Route path="/notification" element={<NotificationPage />} />
+      </Route>
     </Routes>
   );
 }
