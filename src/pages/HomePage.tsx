@@ -218,14 +218,14 @@ const HomePage: React.FC = () => {
                           topic.category ||
                           (selectedCategory !== '전체' ? selectedCategory : '기타')
                         }
-                        keyword={topic.keyword || topic.title?.split(' ')[0] || '키워드'}
+                        keyword={topic.keyword || '주요이슈'}
                         title={topic.title || '제목 없음'}
                         summary={topic.summary || ''}
                         firstReportDate={
                           topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
                         }
                         isBookmarked={!!topic.is_subscribed}
-                        articleCount={topic.article_count || Math.floor(Math.random() * 50) + 50}
+                        articleCount={topic.article_count ?? 0}
                         bias={{ left: 18, center: 60, right: 22 }}
                       />
                     ))

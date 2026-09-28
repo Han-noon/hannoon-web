@@ -20,6 +20,20 @@ export interface ThemeCardProps {
   imageUrl?: string; // 썸네일 이미지
 }
 
+// 날짜 문자열(ISO 형태 등)을 YYYY.MM.DD 형식으로 변환해주는 파싱 함수
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  // 유효하지 않은 날짜 문자열일 경우 기존 문자열 반환
+  if (isNaN(date.getTime())) {
+    return dateStr;
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+};
+
 const ThemeCard: React.FC<ThemeCardProps> = ({
   id,
   category,
@@ -29,11 +43,14 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
   firstReportDate,
   latestReportDate, // 기존 prop 호환 유지
   isBookmarked,
-  articleCount = 98,
+  articleCount = 0,
   bias = { left: 18, center: 60, right: 22 },
   imageUrl = 'https://via.placeholder.com/400x200?text=News+Thumbnail',
 }) => {
   const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
+
+  // 전달된 firstReportDate(created_at)를 YYYY.MM.DD 포맷으로 파싱
+  const formattedFirstReportDate = formatDate(firstReportDate);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -117,7 +134,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
               </span>
             </div>
 
-            {/* 북마크 아이콘 수정: 비활성 시 회색 선, 활성 시 보라색 면 */}
+            {/* 북마크 아이콘 */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -156,7 +173,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
           {/* 하단 정보 & 성향 통계 */}
           <div className="mt-auto">
             <div className="flex justify-between items-center text-[12px] text-gray-500 mb-2.5">
-              <span>최초 보도 | {firstReportDate}</span>
+              <span>최초 보도 | {formattedFirstReportDate}</span>
               <span>관련 기사 {articleCount}개</span>
             </div>
 
