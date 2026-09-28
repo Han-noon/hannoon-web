@@ -44,6 +44,7 @@ function App() {
   return (
     <Routes>
       <Route path="/signin" element={<SignInPage />}></Route>
+      <Route path="/signin12" element={<SignInPage />}></Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>

@@ -1,8 +1,12 @@
 //import naverLogo from '@/assets/naver_icon.svg';
 import { signInWithOAuth } from '@/api/auth/signInWithOAuth';
 import googleLogo from '@/assets/google_icon.svg';
+import { useLocation } from 'react-router-dom';
 
 const SignInPage = () => {
+  const { pathname } = useLocation();
+  const isOAuthEnabled = pathname === '/signin12';
+
   return (
     <div className="bg-[#f8f9fa] h-screen flex justify-center items-center">
       <div className="p-8 border border-gray-300 rounded-xl shadow-md bg-white text-center w-[500px]">
@@ -18,7 +22,10 @@ const SignInPage = () => {
           </button> */}
           <button
             onClick={signInWithOAuth}
-            className="bg-[#F7F7F7] h-12 w-full flex justify-center items-center rounded-md"
+            disabled={!isOAuthEnabled}
+            className={`bg-[#F7F7F7] h-12 w-full flex justify-center items-center rounded-md ${
+              isOAuthEnabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+            }`}
           >
             <div className="mr-2">
               <img src={googleLogo} alt="구글" width={36} />
