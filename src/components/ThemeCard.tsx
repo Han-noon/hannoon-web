@@ -41,7 +41,6 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
   title,
   summary,
   firstReportDate,
-  latestReportDate, // 기존 prop 호환 유지
   isBookmarked,
   articleCount = 0,
   bias = { left: 18, center: 60, right: 22 },
