@@ -18,13 +18,13 @@ export interface ThemeCardProps {
   articleCount?: number; // 관련 기사 개수
   bias?: { left: number; center: number; right: number }; // 성향 퍼센트
   imageUrl?: string; // 썸네일 이미지
+  onBookmarkToggle?: (id: number, isSubscribed: boolean) => void; // 부모에게 상태 변경 알림
 }
 
 // 날짜 문자열(ISO 형태 등)을 YYYY.MM.DD 형식으로 변환해주는 파싱 함수
 const formatDate = (dateStr: string): string => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  // 유효하지 않은 날짜 문자열일 경우 기존 문자열 반환
   if (isNaN(date.getTime())) {
     return dateStr;
   }
@@ -44,12 +44,13 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
   isBookmarked,
   articleCount = 0,
   bias = { left: 18, center: 60, right: 22 },
-  imageUrl = 'https://via.placeholder.com/400x200?text=News+Thumbnail',
+  imageUrl,
+  onBookmarkToggle,
 }) => {
   const cleanSummary = summary.replace(/^AI 요약:\s*/, '');
-
-  // 전달된 firstReportDate(created_at)를 YYYY.MM.DD 포맷으로 파싱
   const formattedFirstReportDate = formatDate(firstReportDate);
+  const displayImageUrl =
+    imageUrl || 'https://placehold.co/400x200/e2e8f0/64748b?text=News+Thumbnail';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -78,6 +79,9 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
       const data = await subscribeTopic(id);
       setSubscribe(data.is_subscribed);
 
+      // 부모 컴포넌트에 상태 변경 알림
+      if (onBookmarkToggle) onBookmarkToggle(id, data.is_subscribed);
+
       if (data.is_subscribed) {
         setIsModalOpen(true);
       }
@@ -85,6 +89,9 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
       try {
         await unsubscribeTopic(id);
         setSubscribe(false);
+
+        // 부모 컴포넌트에 상태 변경 알림 (스크랩 취소 시 MyPage에서 즉시 삭제됨)
+        if (onBookmarkToggle) onBookmarkToggle(id, false);
       } catch (error) {
         console.error(error);
       }
@@ -114,7 +121,7 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
         {/* 상단 썸네일 이미지 영역 */}
         <div className="w-full h-[150px] bg-gray-200 overflow-hidden relative">
           <img
-            src={imageUrl}
+            src={displayImageUrl}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
