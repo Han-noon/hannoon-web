@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import ThemeCard from '@/components/ThemeCard';
 import Pagination from '@/components/Pagination';
-import { getTopics } from '@/api/topic/getTopics';
 import { useSearchStore } from '@/store/useSearchStore';
 import { supabase } from '@/lib/supabase';
 
@@ -37,7 +36,7 @@ interface PopularTimeline {
   views_as_of: string;
 }
 
-// 토픽 메타 정보 타입
+// 백엔드 명세에 맞춘 토픽 메타 정보 타입
 interface TopicItem {
   id: number;
   category: string;
@@ -47,7 +46,12 @@ interface TopicItem {
   updated_at?: string;
   is_subscribed?: boolean;
   article_count?: number;
-  keyword?: string;
+  keywords?: string[]; // 배열로 들어옴
+  left_percent?: number;
+  mid_percent?: number;
+  right_percent?: number;
+  first_published_at?: string;
+  topic_image_url?: string; // 백엔드가 알려준 진짜 썸네일 URL
 }
 // -----------------------
 
@@ -83,7 +87,8 @@ const AlertModal: React.FC<{
 
 const HomePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<'latest' | 'count'>('latest');
+  // 백엔드 정렬 명세 ('latest', 'articles')에 맞춤
+  const [sortOrder, setSortOrder] = useState<'latest' | 'articles'>('latest');
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   const [topicData, setTopicData] = useState<TopicItem[]>([]);
@@ -102,24 +107,31 @@ const HomePage: React.FC = () => {
     window.scrollTo({ top: 200, behavior: 'smooth' });
   }, [currentPage]);
 
-  // 메인 토픽 리스트 페칭
+  // 메인 토픽 리스트 페칭 (get_topics 하나로 모두 해결)
   useEffect(() => {
     const fetchTopics = async () => {
       setIsLoading(true);
       try {
-        // 1. 카테고리가 '전체'일 경우 undefined 대신 null로 처리 (getTopics 타입 string | null에 맞춤)
         const categoryParam = selectedCategory === '전체' ? null : selectedCategory;
         const searchParam = keyword?.trim() ? keyword : null;
 
-        // 2. getTopics(p_category, p_page, p_search) 순서와 개수에 맞춰 호출
-        const response: any = await getTopics(categoryParam, currentPage, searchParam);
+        // 프론트 함수 래퍼 대신 백엔드 명세에 맞춰 supabase rpc를 직접 호출하여 파라미터 안전성 보장
+        const { data, error } = await supabase.rpc('get_topics', {
+          p_category: categoryParam,
+          p_order: sortOrder, // 'latest' 또는 'articles'
+          p_page: currentPage,
+          p_search: searchParam,
+          p_size: 6, // API 기본값
+        });
 
-        if (response && (response.topics || response.data)) {
-          setTopicData(response.topics || response.data);
-          setTotalPages(response.total_pages || 1);
+        if (!error && data) {
+          // data.topics가 배열 형태로 넘어옵니다.
+          setTopicData(data.topics || data || []);
+          setTotalPages(data.total_pages || 1);
         } else {
           setTopicData([]);
           setTotalPages(1);
+          if (error) console.error('Supabase RPC get_topics Error:', error);
         }
       } catch (error) {
         console.error('토픽 API 에러:', error);
@@ -128,7 +140,7 @@ const HomePage: React.FC = () => {
       }
     };
     fetchTopics();
-  }, [currentPage, selectedCategory, search, keyword]);
+  }, [currentPage, selectedCategory, search, keyword, sortOrder]); // sortOrder 변경 시에도 호출되도록 의존성 배열에 추가
 
   // 사이드바(핫 토픽 랭킹, 실시간 타임라인) API 연동
   useEffect(() => {
@@ -186,9 +198,9 @@ const HomePage: React.FC = () => {
               최신순
             </button>
             <button
-              onClick={() => setSortOrder('count')}
+              onClick={() => setSortOrder('articles')}
               className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                sortOrder === 'count'
+                sortOrder === 'articles'
                   ? 'bg-white text-black shadow-sm'
                   : 'text-gray-500 hover:text-black'
               }`}
@@ -218,15 +230,26 @@ const HomePage: React.FC = () => {
                           topic.category ||
                           (selectedCategory !== '전체' ? selectedCategory : '기타')
                         }
-                        keyword={topic.keyword || '주요이슈'}
+                        // 키워드가 배열로 들어오므로 값이 있으면 첫번째 요소를 보여줌
+                        keyword={
+                          topic.keywords && topic.keywords.length > 0
+                            ? topic.keywords[0]
+                            : '주요이슈'
+                        }
                         title={topic.title || '제목 없음'}
                         summary={topic.summary || ''}
-                        firstReportDate={
-                          topic.created_at ? topic.created_at.slice(0, 10).replaceAll('-', '.') : ''
-                        }
+                        // 첫 기사 보도 시간(first_published_at)을 우선시하고, 없으면 생성일 사용
+                        firstReportDate={topic.first_published_at || topic.created_at || ''}
                         isBookmarked={!!topic.is_subscribed}
                         articleCount={topic.article_count ?? 0}
-                        bias={{ left: 18, center: 60, right: 22 }}
+                        // 진짜 성향 통계 매핑
+                        bias={{
+                          left: topic.left_percent ?? 18,
+                          center: topic.mid_percent ?? 60,
+                          right: topic.right_percent ?? 22,
+                        }}
+                        // 진짜 썸네일 이미지 연결
+                        imageUrl={topic.topic_image_url}
                       />
                     ))
                   ) : (
