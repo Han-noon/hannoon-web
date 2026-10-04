@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { getTopicSubtopicTimeline } from '@/api/topic/getTopicSubtopicTimeline';
 import { getRelatedTopics, type RelatedTopic } from '@/api/topic/getRelatedTopics';
@@ -12,9 +12,10 @@ import SubscribeModal from '@/components/SubscribeModal';
 import NotificationPermissionModal from '@/components/NotificationPermissionModal';
 import Spinner from '@/components/Spinner';
 
+import useClickOutside from '@/hooks/useClickOutside';
 import useSession from '@/hooks/useSession';
 
-import type { ArticleItem } from '@/types/article';
+import type { ArticleItem, BiasType } from '@/types/article';
 import type { SubtopicTimelineResponse, TopicTimelineEvent } from '@/types/topicSubtopicTimeline';
 
 type PositionedEvent = {
@@ -23,7 +24,7 @@ type PositionedEvent = {
   y: number;
 };
 
-const xs = [48, 184, 320, 456, 592];
+const xs = [64, 229, 395, 560];
 
 const formatDate = (value?: string | null) =>
   value ? value.slice(0, 10).replaceAll('-', '.') : '날짜 미정';
@@ -32,12 +33,12 @@ function buildLayout(events: TopicTimelineEvent[]) {
   const rows: PositionedEvent[][] = [];
 
   events.forEach((event, index) => {
-    const row = Math.floor(index / 5);
-    const slot = index % 5;
+    const row = Math.floor(index / xs.length);
+    const slot = index % xs.length;
 
     (rows[row] ??= []).push({
       event,
-      x: xs[row % 2 === 0 ? slot : 4 - slot],
+      x: xs[row % 2 === 0 ? slot : xs.length - 1 - slot],
       y: 39 + row * 162,
     });
   });
@@ -133,7 +134,7 @@ const css = `
   box-sizing:border-box;
   max-width:1152px;
   margin:0 auto;
-  padding:56px 48px 90px;
+  padding:30px 48px 90px;
   background:#fafbff;
   color:#111c2d;
   font-family:'Noto Sans KR','Pretendard',system-ui,sans-serif
@@ -311,7 +312,7 @@ const css = `
   background:#eff2f7
 }
 
-.tl-tab{
+.tl-page .tl-tab{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -324,7 +325,7 @@ const css = `
   border-radius:999px;
   background:#fff;
   color:#43474f;
-  font-size:11px;
+  font-size:12px;
   font-weight:500!important;
   white-space:nowrap
 }
@@ -346,7 +347,7 @@ const css = `
   border-radius:999px;
   background:#f7f9fc;
   color:#667084;
-  font-size:10px;
+  font-size:9px;
   line-height:1
 }
 
@@ -477,7 +478,7 @@ const css = `
   display:flex;
   align-items:center;
   flex-direction:column;
-  width:96px;
+  width:128px;
   min-height:96px;
   padding:0;
   border:0;
@@ -506,7 +507,7 @@ const css = `
 }
 
 .tl-node-label{
-  width:96px;
+  width:128px;
   padding-top:8px;
   text-align:center;
   font-size:12px;
@@ -633,20 +634,89 @@ const css = `
   height:12px;
   overflow:hidden;
   margin-top:14px;
-  border-radius:9px
+  border-radius:9px;
+  background:#d9d9d9
 }
 
 /* 밝은 보도 성향 색 */
-.tl-bar i:nth-child(1){
+.tl-bar button{
+  min-width:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  transition:filter .15s, box-shadow .15s
+}
+
+.tl-bar button:hover,
+.tl-bar button:focus-visible,
+.tl-bar button.active{
+  z-index:1;
+  filter:saturate(1.25);
+  box-shadow:inset 0 0 0 2px #ffffffb3
+}
+
+.tl-bar button.active{
+  border-radius:9px
+}
+
+.tl-bar .left{
   background:#4f7fc4
 }
 
-.tl-bar i:nth-child(2){
+.tl-bar .mid{
   background:#9274b5
 }
 
-.tl-bar i:nth-child(3){
+.tl-bar .right{
   background:#df6f6f
+}
+
+.tl-bias{
+  position:relative
+}
+
+.tl-publishers{
+  position:absolute;
+  z-index:50;
+  top:20px;
+  left:0;
+  display:flex;
+  width:100%;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:11px;
+  border:2px solid;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 8px 20px #1c27371f
+}
+
+.tl-publishers.left{
+  border-color:#4f7fc4
+}
+
+.tl-publishers.mid{
+  border-color:#9274b5
+}
+
+.tl-publishers.right{
+  border-color:#df6f6f
+}
+
+.tl-publisher{
+  padding:4px 8px;
+  border-radius:999px;
+  background:#e8edf5;
+  color:#43474f;
+  font-size:11px;
+  line-height:1.4
+}
+
+.tl-publisher-empty{
+  width:100%;
+  color:var(--muted);
+  font-size:11px;
+  text-align:center
 }
 
 .tl-bias-label{
@@ -696,13 +766,33 @@ const css = `
 .tl-articles{
   display:grid;
   gap:10px;
-  margin-top:12px
+  max-height:248px;
+  margin-top:12px;
+  overflow-y:auto;
+  padding-right:4px;
+  scrollbar-width:thin;
+  scrollbar-color:#aab6c7 #eff2f7
+}
+
+.tl-articles::-webkit-scrollbar{
+  width:6px
+}
+
+.tl-articles::-webkit-scrollbar-thumb{
+  border-radius:6px;
+  background:#aab6c7
+}
+
+.tl-articles::-webkit-scrollbar-track{
+  background:#eff2f7
 }
 
 .tl-article{
+  height:76px;
   padding:11px;
   border:1px solid #dce1eb;
-  border-radius:8px
+  border-radius:8px;
+  overflow:hidden
 }
 
 .tl-article>div{
@@ -723,8 +813,11 @@ const css = `
 }
 
 .tl-article a{
-  display:block;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
   margin-top:5px;
+  overflow:hidden;
   color:#0e3566;
   font-size:12px;
   font-weight:700;
@@ -916,6 +1009,16 @@ export default function TimelinePage() {
 
   const { session } = useSession();
 
+  useEffect(() => {
+    const previousBackgroundColor = document.body.style.backgroundColor;
+
+    document.body.style.backgroundColor = '#fafbff';
+
+    return () => {
+      document.body.style.backgroundColor = previousBackgroundColor;
+    };
+  }, []);
+
   const tabsRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -933,6 +1036,16 @@ export default function TimelinePage() {
   const [articlesLoading, setArticlesLoading] = useState(false);
 
   const [articlesError, setArticlesError] = useState('');
+
+  const [selectedBias, setSelectedBias] = useState<BiasType | null>(null);
+
+  const biasPublishersRef = useRef<HTMLDivElement>(null);
+
+  const closeBiasPublishers = useCallback(() => {
+    setSelectedBias(null);
+  }, []);
+
+  useClickOutside(biasPublishersRef, closeBiasPublishers);
 
   /*
    * 실제 연관 토픽
@@ -1039,6 +1152,7 @@ export default function TimelinePage() {
       setDetailArticles([]);
       setArticlesError('');
       setArticlesLoading(false);
+      setSelectedBias(null);
       return;
     }
 
@@ -1048,18 +1162,35 @@ export default function TimelinePage() {
       setArticlesLoading(true);
       setArticlesError('');
       setDetailArticles([]);
+      setSelectedBias(null);
 
       try {
-        const response = await getArticlesByEvent({
+        const firstPage = await getArticlesByEvent({
           eventId: selectedId,
           page: 1,
-          size: 3,
+          size: 100,
           order: 'desc',
         });
 
         if (cancelled) return;
 
-        setDetailArticles(response.articles ?? []);
+        const remainingPages = await Promise.all(
+          Array.from({ length: Math.max(0, firstPage.total_pages - 1) }, (_, index) =>
+            getArticlesByEvent({
+              eventId: selectedId,
+              page: index + 2,
+              size: 100,
+              order: 'desc',
+            })
+          )
+        );
+
+        if (cancelled) return;
+
+        setDetailArticles([
+          ...(firstPage.articles ?? []),
+          ...remainingPages.flatMap((page) => page.articles ?? []),
+        ]);
       } catch (cause) {
         if (cancelled) return;
 
@@ -1137,6 +1268,28 @@ export default function TimelinePage() {
 
   const selectedEvent = events.find((event) => event.id === selectedId) ?? null;
 
+  const publishersByBias = useMemo<Record<BiasType, string[]>>(() => {
+    const publishers: Record<BiasType, Set<string>> = {
+      진보: new Set(),
+      중도: new Set(),
+      보수: new Set(),
+    };
+
+    detailArticles.forEach((article) => {
+      const publisher = article.publisher.trim();
+
+      if (publisher) {
+        publishers[article.bias_type].add(publisher);
+      }
+    });
+
+    return {
+      진보: [...publishers.진보],
+      중도: [...publishers.중도],
+      보수: [...publishers.보수],
+    };
+  }, [detailArticles]);
+
   /*
    * 선택된 서브토픽에 포함되는 이벤트인지
    */
@@ -1151,6 +1304,23 @@ export default function TimelinePage() {
   const layout = useMemo(() => buildLayout(events), [events]);
 
   const scale = Math.min(1, viewportWidth / 640) * zoom;
+
+  const handleSubtopicClick = (nextSubtopicId: number | null) => {
+    setSubtopicId(nextSubtopicId);
+
+    if (nextSubtopicId === null) return;
+
+    const firstNode = layout.nodes.find(({ event }) => event.subtopic_ids.includes(nextSubtopicId));
+    const viewport = viewportRef.current;
+
+    if (!firstNode || !viewport) return;
+
+    viewport.scrollTo({
+      left: Math.max(0, firstNode.x * scale - viewport.clientWidth / 2),
+      top: Math.max(0, firstNode.y * scale - viewport.clientHeight / 2),
+      behavior: 'smooth',
+    });
+  };
 
   const tracking = stats?.first_published_at
     ? `${formatDate(stats.first_published_at)} ~ ${
@@ -1267,7 +1437,7 @@ export default function TimelinePage() {
       />
 
       <div className="tl-crumb">
-        타임라인으로 보는 사건
+        토픽리스트
         <span>›</span>
         {topic.category ?? '미분류'}
         <span>›</span>
@@ -1349,7 +1519,7 @@ export default function TimelinePage() {
             type="button"
             role="tab"
             aria-selected={subtopicId === null}
-            onClick={() => setSubtopicId(null)}
+            onClick={() => handleSubtopicClick(null)}
           >
             전체
           </button>
@@ -1361,7 +1531,7 @@ export default function TimelinePage() {
               type="button"
               role="tab"
               aria-selected={subtopicId === item.id}
-              onClick={() => setSubtopicId(item.id)}
+              onClick={() => handleSubtopicClick(item.id)}
             >
               {item.name}
 
@@ -1454,7 +1624,7 @@ export default function TimelinePage() {
                         className={`tl-node ${hit ? 'hit' : ''} ${selected ? 'selected' : ''}`}
                         type="button"
                         style={{
-                          left: x - 48,
+                          left: x - 64,
                           top: y - 39,
                         }}
                         onClick={() => setSelectedId(event.id)}
@@ -1530,47 +1700,88 @@ export default function TimelinePage() {
                   <small>{selectedEvent.article_count}건 대상</small>
                 </div>
 
-                <div className="tl-bar">
-                  <i
-                    style={{
-                      width: `${selectedEvent.left_percent}%`,
-                    }}
-                  />
+                <div ref={biasPublishersRef} className="tl-bias">
+                  <div className="tl-bar" aria-label="보도 성향별 언론사">
+                    <button
+                      type="button"
+                      className={`left ${selectedBias === '진보' ? 'active' : ''}`}
+                      style={{
+                        width: `${selectedEvent.left_percent}%`,
+                      }}
+                      aria-label={`진보 ${selectedEvent.left_percent}%, 언론사 보기`}
+                      aria-pressed={selectedBias === '진보'}
+                      onClick={() =>
+                        setSelectedBias((current) => (current === '진보' ? null : '진보'))
+                      }
+                    />
 
-                  <i
-                    style={{
-                      width: `${selectedEvent.mid_percent}%`,
-                    }}
-                  />
+                    <button
+                      type="button"
+                      className={`mid ${selectedBias === '중도' ? 'active' : ''}`}
+                      style={{
+                        width: `${selectedEvent.mid_percent}%`,
+                      }}
+                      aria-label={`중도 ${selectedEvent.mid_percent}%, 언론사 보기`}
+                      aria-pressed={selectedBias === '중도'}
+                      onClick={() =>
+                        setSelectedBias((current) => (current === '중도' ? null : '중도'))
+                      }
+                    />
 
-                  <i
-                    style={{
-                      width: `${selectedEvent.right_percent}%`,
-                    }}
-                  />
-                </div>
+                    <button
+                      type="button"
+                      className={`right ${selectedBias === '보수' ? 'active' : ''}`}
+                      style={{
+                        width: `${selectedEvent.right_percent}%`,
+                      }}
+                      aria-label={`보수 ${selectedEvent.right_percent}%, 언론사 보기`}
+                      aria-pressed={selectedBias === '보수'}
+                      onClick={() =>
+                        setSelectedBias((current) => (current === '보수' ? null : '보수'))
+                      }
+                    />
+                  </div>
 
-                <div className="tl-bias-label">
-                  <span>
-                    <i />
-                    진보 {selectedEvent.left_percent}%
-                  </span>
+                  {selectedBias && (
+                    <div
+                      className={`tl-publishers ${
+                        selectedBias === '진보' ? 'left' : selectedBias === '중도' ? 'mid' : 'right'
+                      }`}
+                    >
+                      {publishersByBias[selectedBias].length > 0 ? (
+                        publishersByBias[selectedBias].map((publisher) => (
+                          <span className="tl-publisher" key={publisher}>
+                            {publisher}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="tl-publisher-empty">등록된 언론사가 없습니다.</span>
+                      )}
+                    </div>
+                  )}
 
-                  <span>
-                    <i />
-                    중도 {selectedEvent.mid_percent}%
-                  </span>
+                  <div className="tl-bias-label">
+                    <span>
+                      <i />
+                      진보 {selectedEvent.left_percent}%
+                    </span>
 
-                  <span>
-                    <i />
-                    보수 {selectedEvent.right_percent}%
-                  </span>
+                    <span>
+                      <i />
+                      중도 {selectedEvent.mid_percent}%
+                    </span>
+
+                    <span>
+                      <i />
+                      보수 {selectedEvent.right_percent}%
+                    </span>
+                  </div>
                 </div>
               </section>
 
               <section>
                 <div className="tl-section-head">
-                  <h3>교차 검증된 주요 보도</h3>
+                  <h3>보도 기사</h3>
 
                   <small>최신순</small>
                 </div>
@@ -1589,7 +1800,12 @@ export default function TimelinePage() {
                           <time>{formatDate(article.published_at)}</time>
                         </div>
 
-                        <a href={article.link} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={article.title}
+                        >
                           {article.title}
                         </a>
                       </div>
@@ -1599,10 +1815,6 @@ export default function TimelinePage() {
                   <p>등록된 주요 보도가 없습니다.</p>
                 )}
               </section>
-
-              <Link className="tl-detail-button" to={`/event-detail/${selectedEvent.id}`}>
-                이벤트 상세 보기 →
-              </Link>
             </>
           ) : (
             <p>이벤트를 선택해 주세요.</p>
