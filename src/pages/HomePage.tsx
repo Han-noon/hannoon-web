@@ -121,7 +121,7 @@ const HomePage: React.FC = () => {
           p_order: sortOrder, // 'latest' 또는 'articles'
           p_page: currentPage,
           p_search: searchParam,
-          p_size: 6, // API 기본값
+          p_size: 4,
         });
 
         if (!error && data) {
