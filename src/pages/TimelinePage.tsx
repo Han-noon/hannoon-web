@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { getTopicSubtopicTimeline } from '@/api/topic/getTopicSubtopicTimeline';
 import { getRelatedTopics, type RelatedTopic } from '@/api/topic/getRelatedTopics';
@@ -696,13 +696,33 @@ const css = `
 .tl-articles{
   display:grid;
   gap:10px;
-  margin-top:12px
+  max-height:248px;
+  margin-top:12px;
+  overflow-y:auto;
+  padding-right:4px;
+  scrollbar-width:thin;
+  scrollbar-color:#aab6c7 #eff2f7
+}
+
+.tl-articles::-webkit-scrollbar{
+  width:6px
+}
+
+.tl-articles::-webkit-scrollbar-thumb{
+  border-radius:6px;
+  background:#aab6c7
+}
+
+.tl-articles::-webkit-scrollbar-track{
+  background:#eff2f7
 }
 
 .tl-article{
+  height:76px;
   padding:11px;
   border:1px solid #dce1eb;
-  border-radius:8px
+  border-radius:8px;
+  overflow:hidden
 }
 
 .tl-article>div{
@@ -723,8 +743,11 @@ const css = `
 }
 
 .tl-article a{
-  display:block;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
   margin-top:5px;
+  overflow:hidden;
   color:#0e3566;
   font-size:12px;
   font-weight:700;
@@ -1050,16 +1073,32 @@ export default function TimelinePage() {
       setDetailArticles([]);
 
       try {
-        const response = await getArticlesByEvent({
+        const firstPage = await getArticlesByEvent({
           eventId: selectedId,
           page: 1,
-          size: 3,
+          size: 100,
           order: 'desc',
         });
 
         if (cancelled) return;
 
-        setDetailArticles(response.articles ?? []);
+        const remainingPages = await Promise.all(
+          Array.from({ length: Math.max(0, firstPage.total_pages - 1) }, (_, index) =>
+            getArticlesByEvent({
+              eventId: selectedId,
+              page: index + 2,
+              size: 100,
+              order: 'desc',
+            })
+          )
+        );
+
+        if (cancelled) return;
+
+        setDetailArticles([
+          ...(firstPage.articles ?? []),
+          ...remainingPages.flatMap((page) => page.articles ?? []),
+        ]);
       } catch (cause) {
         if (cancelled) return;
 
@@ -1570,7 +1609,7 @@ export default function TimelinePage() {
 
               <section>
                 <div className="tl-section-head">
-                  <h3>교차 검증된 주요 보도</h3>
+                  <h3>보도 기사</h3>
 
                   <small>최신순</small>
                 </div>
@@ -1589,7 +1628,12 @@ export default function TimelinePage() {
                           <time>{formatDate(article.published_at)}</time>
                         </div>
 
-                        <a href={article.link} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={article.title}
+                        >
                           {article.title}
                         </a>
                       </div>
@@ -1599,10 +1643,6 @@ export default function TimelinePage() {
                   <p>등록된 주요 보도가 없습니다.</p>
                 )}
               </section>
-
-              <Link className="tl-detail-button" to={`/event-detail/${selectedEvent.id}`}>
-                이벤트 상세 보기 →
-              </Link>
             </>
           ) : (
             <p>이벤트를 선택해 주세요.</p>
