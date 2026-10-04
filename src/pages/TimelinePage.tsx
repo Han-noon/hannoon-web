@@ -24,7 +24,7 @@ type PositionedEvent = {
   y: number;
 };
 
-const xs = [48, 184, 320, 456, 592];
+const xs = [64, 229, 395, 560];
 
 const formatDate = (value?: string | null) =>
   value ? value.slice(0, 10).replaceAll('-', '.') : '날짜 미정';
@@ -33,12 +33,12 @@ function buildLayout(events: TopicTimelineEvent[]) {
   const rows: PositionedEvent[][] = [];
 
   events.forEach((event, index) => {
-    const row = Math.floor(index / 5);
-    const slot = index % 5;
+    const row = Math.floor(index / xs.length);
+    const slot = index % xs.length;
 
     (rows[row] ??= []).push({
       event,
-      x: xs[row % 2 === 0 ? slot : 4 - slot],
+      x: xs[row % 2 === 0 ? slot : xs.length - 1 - slot],
       y: 39 + row * 162,
     });
   });
@@ -134,7 +134,7 @@ const css = `
   box-sizing:border-box;
   max-width:1152px;
   margin:0 auto;
-  padding:56px 48px 90px;
+  padding:30px 48px 90px;
   background:#fafbff;
   color:#111c2d;
   font-family:'Noto Sans KR','Pretendard',system-ui,sans-serif
@@ -312,7 +312,7 @@ const css = `
   background:#eff2f7
 }
 
-.tl-tab{
+.tl-page .tl-tab{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -325,7 +325,7 @@ const css = `
   border-radius:999px;
   background:#fff;
   color:#43474f;
-  font-size:11px;
+  font-size:12px;
   font-weight:500!important;
   white-space:nowrap
 }
@@ -347,7 +347,7 @@ const css = `
   border-radius:999px;
   background:#f7f9fc;
   color:#667084;
-  font-size:10px;
+  font-size:9px;
   line-height:1
 }
 
@@ -478,7 +478,7 @@ const css = `
   display:flex;
   align-items:center;
   flex-direction:column;
-  width:96px;
+  width:128px;
   min-height:96px;
   padding:0;
   border:0;
@@ -507,7 +507,7 @@ const css = `
 }
 
 .tl-node-label{
-  width:96px;
+  width:128px;
   padding-top:8px;
   text-align:center;
   font-size:12px;
@@ -1009,6 +1009,16 @@ export default function TimelinePage() {
 
   const { session } = useSession();
 
+  useEffect(() => {
+    const previousBackgroundColor = document.body.style.backgroundColor;
+
+    document.body.style.backgroundColor = '#fafbff';
+
+    return () => {
+      document.body.style.backgroundColor = previousBackgroundColor;
+    };
+  }, []);
+
   const tabsRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -1295,6 +1305,23 @@ export default function TimelinePage() {
 
   const scale = Math.min(1, viewportWidth / 640) * zoom;
 
+  const handleSubtopicClick = (nextSubtopicId: number | null) => {
+    setSubtopicId(nextSubtopicId);
+
+    if (nextSubtopicId === null) return;
+
+    const firstNode = layout.nodes.find(({ event }) => event.subtopic_ids.includes(nextSubtopicId));
+    const viewport = viewportRef.current;
+
+    if (!firstNode || !viewport) return;
+
+    viewport.scrollTo({
+      left: Math.max(0, firstNode.x * scale - viewport.clientWidth / 2),
+      top: Math.max(0, firstNode.y * scale - viewport.clientHeight / 2),
+      behavior: 'smooth',
+    });
+  };
+
   const tracking = stats?.first_published_at
     ? `${formatDate(stats.first_published_at)} ~ ${
         stats.last_published_at ? formatDate(stats.last_published_at) : '현재'
@@ -1410,7 +1437,7 @@ export default function TimelinePage() {
       />
 
       <div className="tl-crumb">
-        타임라인으로 보는 사건
+        토픽리스트
         <span>›</span>
         {topic.category ?? '미분류'}
         <span>›</span>
@@ -1492,7 +1519,7 @@ export default function TimelinePage() {
             type="button"
             role="tab"
             aria-selected={subtopicId === null}
-            onClick={() => setSubtopicId(null)}
+            onClick={() => handleSubtopicClick(null)}
           >
             전체
           </button>
@@ -1504,7 +1531,7 @@ export default function TimelinePage() {
               type="button"
               role="tab"
               aria-selected={subtopicId === item.id}
-              onClick={() => setSubtopicId(item.id)}
+              onClick={() => handleSubtopicClick(item.id)}
             >
               {item.name}
 
@@ -1597,7 +1624,7 @@ export default function TimelinePage() {
                         className={`tl-node ${hit ? 'hit' : ''} ${selected ? 'selected' : ''}`}
                         type="button"
                         style={{
-                          left: x - 48,
+                          left: x - 64,
                           top: y - 39,
                         }}
                         onClick={() => setSelectedId(event.id)}
@@ -1718,11 +1745,7 @@ export default function TimelinePage() {
                   {selectedBias && (
                     <div
                       className={`tl-publishers ${
-                        selectedBias === '진보'
-                          ? 'left'
-                          : selectedBias === '중도'
-                            ? 'mid'
-                            : 'right'
+                        selectedBias === '진보' ? 'left' : selectedBias === '중도' ? 'mid' : 'right'
                       }`}
                     >
                       {publishersByBias[selectedBias].length > 0 ? (
